@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "compile": ".\\node_modules\\.bin\\tsc",
+    "postcompile": "node ./src/prepend.js"
+  },
+  "dependencies": {
+    "@types/youtube": "^0.0.50",
+    "@violentmonkey/types": "^0.1.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
