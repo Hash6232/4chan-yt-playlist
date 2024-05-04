@@ -425,7 +425,6 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         playlist.state = 0;
         const pages = playlist.toPages();
         playlist.dialog?.updateTabs(pages.length);
-        localStorage.removeItem("Last played track");
         let history = {};
         try {
             history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
