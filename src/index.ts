@@ -84,14 +84,18 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
     
         const pages = playlist.toPages();
         playlist.dialog?.updateTabs(pages.length);
+
+        localStorage.removeItem("Last played track");
+        let history: TracksHistory = {};
+        try {
+            history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+        } catch { console.error("Failed to parse playlist history from local storage") };
+        
+        const lastPlayedTrack = history[playlist.board + "." + playlist.thread] || null;
+        const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
     
-        const key = location.hostname === "boards.4chan.org" ? "4chan Last Played" : "Warosu Last Played";
-        const no = window.location.pathname.split("/").pop() || "";
-        const track = GM_getValue(key, {} as TracksHistory)[no] || undefined;
-        const page = track ? pages.find(p => p.includes(track)) : pages[0];
-    
-        if (track && page) {
-            e.target.cuePlaylist(page, page.indexOf(track))
+        if (lastPlayedTrack && lastPage) {
+            e.target.cuePlaylist(lastPage, lastPage.indexOf(lastPlayedTrack))
         } else {
             e.target.cuePlaylist(pages[0])
         }
@@ -111,18 +115,17 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             if (page > -1 && page < pages.length - 1) e.target.loadPlaylist(pages[page + 1]);
         } else if (e.data == -1) {
             // If track ended or next is loaded
-    
-            // Retrive snapshot of the cached history for the relevant image board
-            const key = location.hostname === "boards.4chan.org" ? "4chan Last Played" : "Warosu Last Played";
-            const cachedTracks = GM_getValue(key, {} as TracksHistory);
-    
-            // Apply changes to snapshot using current thread as key
+
+            // Save last played track
             playlist.track = e.target.getVideoUrl().split("=").pop() || "";
-            const no = window.location.pathname.split("/").pop() || "";
-            cachedTracks[no] = playlist.track;
-    
-            // Overwrite history in the storage with the modified snapshot
-            GM_setValue(key, cachedTracks);
+            
+            let history: TracksHistory = {};
+            try {
+                history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+                history[playlist.board + "." + playlist.thread] = playlist.track;
+            } catch { console.error("Failed to parse playlist history from local storage") };
+            
+            localStorage.setItem("4chan-x-yt-playlist-history", JSON.stringify(history));
     
             // Due to a change to when state 0 is returned, update playlist
             // attempts must now also happen when the next track is loaded
