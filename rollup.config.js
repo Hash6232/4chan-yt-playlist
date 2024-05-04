@@ -11,7 +11,7 @@ export default [
       format: 'es'
     },
     plugins: [typescript(), metablock({
-      file: 'src/metadata.json'
+      file: './metadata.json'
     })]
   },
   {
@@ -21,7 +21,7 @@ export default [
       format: 'es'
     },
     plugins: [typescript(), terser(), metablock({
-      file: 'src/metadata.json'
+      file: './metadata.json'
     })]
   }
 ];
