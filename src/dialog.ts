@@ -40,7 +40,7 @@ class Dialog {
 
         move.addEventListener("mousedown", toggleDrag);
         jump.addEventListener("click", () => { playlist.jumpTo(playlist.track) });
-        close.addEventListener("click", () => { this.toggle(true)});
+        close.addEventListener("click", () => { playlist.dialog?.toggle(true) });
 
         // Dialog drag defuser
         document.addEventListener("mouseup", toggleDrag);
@@ -56,10 +56,10 @@ class Dialog {
 
         // Dialog toggle
         this.shortcut?.addEventListener("click", () => {
-            if (! playlist.dialog || playlist.checking || playlist.isEmpty()) return;
+            if (playlist.checking || playlist.isEmpty()) return;
             if (! playlist.player) return playlist.initAPI();
 
-            return this.toggle()
+            return playlist.dialog?.toggle()
         })
 
         // Drag callback functions
@@ -184,13 +184,15 @@ class Dialog {
     }
 
     toggle(close?: boolean) {
-        if (close || this.node?.classList.contains("hide")) {
-            this.node?.classList.remove("hide");
-            this.shortcut?.classList.remove("disabled");
-        } else {
+
+        if (close || ! this.node?.classList.contains("hide")) {
             this.node?.classList.add("hide");
             this.shortcut?.classList.add("disabled");
+        } else {
+            this.node?.classList.remove("hide");
+            this.shortcut?.classList.remove("disabled");
         }
+        
     }
 
     updateTabs(amount: number) {
