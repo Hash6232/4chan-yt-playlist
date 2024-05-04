@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.3.0
+// @version     2.3.1
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @require     https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js
@@ -57,7 +57,7 @@ class Playlist {
             return array;
         }, []);
         if (validPosts.length < 1)
-            return Promise.reject(0);
+            return Promise.resolve(0);
         const parsedPosts = validPosts.map(async (post) => {
             return Promise.allSettled(post[1].map((id) => this.checkLink(id)))
                 .then((responses) => [post[0], responses.reduce((output, res) => {
@@ -373,9 +373,9 @@ document.addEventListener("4chanXInitFinished", () => {
         if (e.detail[404])
             return;
         Promise.allSettled([
-            new Promise((ok, abort) => {
+            new Promise((done) => {
                 if (e.detail.newPosts.length < 1)
-                    return abort();
+                    return done();
                 const newPosts = e.detail.newPosts.map((fullId) => {
                     const no = fullId.split(".").pop() || "";
                     return [no, document.getElementById("m" + no)?.innerHTML || ""];
@@ -383,15 +383,15 @@ document.addEventListener("4chanXInitFinished", () => {
                 playlist.checking = true;
                 playlist.parsePosts(newPosts).then((addedPosts) => {
                     if (!playlist.player)
-                        return abort();
+                        return done();
                     if (addedPosts > 0)
                         playlist.mutated = true;
-                    return ok();
+                    return done();
                 });
             }),
-            new Promise((ok, abort) => {
+            new Promise((done) => {
                 if (e.detail.deletedPosts.length < 1)
-                    return abort();
+                    return done();
                 e.detail.deletedPosts.forEach((fullId) => {
                     const postId = fullId.split(".").pop();
                     if (!postId || !(postId in playlist.posts))
@@ -401,7 +401,7 @@ document.addEventListener("4chanXInitFinished", () => {
                         return;
                     playlist.mutated = true;
                 });
-                return ok();
+                return done();
             })
         ])
             .finally(() => {
