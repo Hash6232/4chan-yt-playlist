@@ -84,17 +84,15 @@ class Playlist {
                 }, []) ] as [ no: string, videos: Video[] ] )
         });
 
-        return new Promise((done) => {
-            Promise.allSettled(parsedPosts).then((responses) => {
-                return responses.reduce((output: [ no: string, videos: Video[] ][], res) => {
-                    if (res.status === "fulfilled") output.push(res.value);
-                    return output
-                }, [])
-            }).then((posts) => {
-                for (const post of posts) this.posts[post[0]] = post[1];
-                this.checking = false;
-                done(posts.length);
-            })
+        return Promise.allSettled(parsedPosts).then((responses) => {
+            return responses.reduce((output: [ no: string, videos: Video[] ][], res) => {
+                if (res.status === "fulfilled") output.push(res.value);
+                return output
+            }, [])
+        }).then((posts) => {
+            for (const post of posts) this.posts[post[0]] = post[1];
+            this.checking = false;
+            return posts.length
         })
     
     }
