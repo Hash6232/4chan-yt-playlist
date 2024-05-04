@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.2.1
+// @version     2.3.0
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @require     https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js
@@ -12,6 +12,8 @@
 // ==/UserScript==
 class Playlist {
     constructor() {
+        this.board = "";
+        this.thread = "";
         this.checking = false;
         this.mutated = false;
         this.playing = false;
@@ -21,6 +23,9 @@ class Playlist {
         this.player = null;
         this.track = "";
         this.regex = /(?:https?:\/\/)?(?:www\.)?youtu(?:\.be\/|be.com\/\S*?(?:watch|embed)(?:(?:(?=\/[-a-zA-Z0-9_]{11,}(?!\S))\/)|(?:\S*?v=|v\/)))([-a-zA-Z0-9_]{11,})/g;
+        const [board, no] = window.location.pathname.slice(1).split("/thread/");
+        this.board = board;
+        this.thread = no;
         document.addEventListener("DOMContentLoaded", async () => {
             this.checking = true;
             const posts = await fetchThread();
@@ -31,7 +36,6 @@ class Playlist {
         async function fetchThread() {
             switch (location.hostname) {
                 case "boards.4chan.org":
-                    const [board, no] = window.location.pathname.slice(1).split("/thread/");
                     const response = await fetch("https://a.4cdn.org/" + board + "/thread/" + no + ".json");
                     const { posts } = await response.json();
                     return posts.map((post) => [post.no.toString(), post.com || ""]);
@@ -421,12 +425,18 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         playlist.state = 0;
         const pages = playlist.toPages();
         playlist.dialog?.updateTabs(pages.length);
-        const key = location.hostname === "boards.4chan.org" ? "4chan Last Played" : "Warosu Last Played";
-        const no = window.location.pathname.split("/").pop() || "";
-        const track = GM_getValue(key, {})[no] || undefined;
-        const page = track ? pages.find(p => p.includes(track)) : pages[0];
-        if (track && page) {
-            e.target.cuePlaylist(page, page.indexOf(track));
+        localStorage.removeItem("Last played track");
+        let history = {};
+        try {
+            history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+        }
+        catch {
+            console.error("Failed to parse playlist history from local storage");
+        }
+        const lastPlayedTrack = history[playlist.board + "." + playlist.thread] || null;
+        const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
+        if (lastPlayedTrack && lastPage) {
+            e.target.cuePlaylist(lastPage, lastPage.indexOf(lastPlayedTrack));
         }
         else {
             e.target.cuePlaylist(pages[0]);
@@ -441,12 +451,16 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
                 e.target.loadPlaylist(pages[page + 1]);
         }
         else if (e.data == -1) {
-            const key = location.hostname === "boards.4chan.org" ? "4chan Last Played" : "Warosu Last Played";
-            const cachedTracks = GM_getValue(key, {});
             playlist.track = e.target.getVideoUrl().split("=").pop() || "";
-            const no = window.location.pathname.split("/").pop() || "";
-            cachedTracks[no] = playlist.track;
-            GM_setValue(key, cachedTracks);
+            let history = {};
+            try {
+                history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+                history[playlist.board + "." + playlist.thread] = playlist.track;
+            }
+            catch {
+                console.error("Failed to parse playlist history from local storage");
+            }
+            localStorage.setItem("4chan-x-yt-playlist-history", JSON.stringify(history));
             if (playlist.mutated)
                 playlist.updatePlayer();
         }
