@@ -4,6 +4,10 @@ class Playlist {
 
     constructor() {
 
+        const [board, no] = window.location.pathname.slice(1).split("/thread/");
+        this.board = board;
+        this.thread = no;
+
         document.addEventListener("DOMContentLoaded", async () => {
 
             this.checking = true;
@@ -17,7 +21,6 @@ class Playlist {
 
             switch(location.hostname) {
                 case "boards.4chan.org":
-                    const [board, no] = window.location.pathname.slice(1).split("/thread/");
                     const response = await fetch("https://a.4cdn.org/" + board + "/thread/" + no + ".json");
                     const { posts } = await response.json() as { posts: { no: number, com?: string }[] };
                     return posts.map((post) => [ post.no.toString(), post.com || "" ])
@@ -32,6 +35,9 @@ class Playlist {
         }
 
     }
+
+    board = "";
+    thread = "";
 
     checking = false;
     mutated = false;
