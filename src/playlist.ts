@@ -1,39 +1,20 @@
 import { Dialog } from "./dialog"
 
-type Posts = {
-    [key: string]: Video[]
-}
-
-type Video = [
-    id: string,
-    status: boolean
-]
-
 class Playlist {
 
     constructor() {
 
         document.addEventListener("DOMContentLoaded", async () => {
-            this.dialog = new Dialog();
-
-            this.dialog.toggle?.addEventListener("click", () => {
-                if (! this.dialog || this.checking || this.isEmpty()) return;
-                if (! this.player) return this.initAPI();
-                
-                if (this.dialog.node?.classList.contains("hide")) {
-                    this.dialog.open()
-                } else {
-                    this.dialog.close()
-                }
-            })
 
             this.checking = true;
             const posts = await fetchThread();
             if (posts.length < 1) throw new Error("No post was found.");
-            this.parsePosts(posts).finally(() => console.log(this.posts))
+            return this.parsePosts(posts)
+
         })
 
         async function fetchThread(): Promise<[ no: string, com: string ][]> {
+
             switch(location.hostname) {
                 case "boards.4chan.org":
                     const [board, no] = window.location.pathname.slice(1).split("/thread/");
@@ -46,7 +27,8 @@ class Playlist {
                 default:
                     console.error("This script isn't compatible with this image board.");
                     return []
-            }            
+            }
+
         }
 
     }
@@ -54,7 +36,9 @@ class Playlist {
     checking = false;
     mutated = false;
     playing = false;
-    failed = false;
+
+    // -1 FAILED | 0 IDLE | 1 LOADING
+    state: -1 | 0 | 1 = 0;
 
     posts: Posts = {};
 
@@ -106,14 +90,22 @@ class Playlist {
 
     initAPI() {
 
-        if (this.failed) return failedLoad();
-        if (this.player) return;
+        if (this.state > 0 || this.player) return;
+        if (this.state < 0) return failedLoad();
+        
+        this.state = 1;
 
         const script = document.createElement("script");
         script.src = "https://www.youtube.com/iframe_api";
         document.head.appendChild(script);
 
-        script.onerror = () => { failedLoad(); this.failed = true; };
+        setTimeout(() => {
+            if (this.state < 1) return;
+            this.state = -1;
+            failedLoad();
+        }, 5000);
+
+        script.onerror = () => { failedLoad(); this.state = -1; };
 
         function failedLoad() {
             document.dispatchEvent(new CustomEvent("CreateNotification", {
@@ -197,14 +189,14 @@ class Playlist {
 
     }
 
-    findPost(track: string): HTMLElement | null {
+    jumpTo(track: string) {
 
-        if (! track) return null;
+        if (! track) return;
 
         const postId = findKey(this.posts, track);
         const is4chan = location.hostname === "boards.4chan.org";
 
-        return postId ? document.getElementById(is4chan ? "pc" : "p" + postId) : null
+        return document.getElementById((is4chan ? "pc" : "p") + postId)?.scrollIntoView()
 
         function findKey(object: Posts, key: string) {
             for (const k in object) {
