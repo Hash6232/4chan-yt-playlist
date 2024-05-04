@@ -64,7 +64,7 @@ class Playlist {
             return array
         }, []);
 
-        if (validPosts.length < 1) return Promise.reject(0);
+        if (validPosts.length < 1) return Promise.resolve(0);
 
         const parsedPosts = validPosts.map(async (post) => {
             return Promise.allSettled(post[1].map((id) => this.checkLink(id)))

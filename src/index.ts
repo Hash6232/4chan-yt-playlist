@@ -20,8 +20,8 @@ document.addEventListener("4chanXInitFinished", () => {
 
         Promise.allSettled([
 
-            new Promise<void>((ok, abort) => {
-                if (e.detail.newPosts.length < 1) return abort();
+            new Promise<void>((done) => {
+                if (e.detail.newPosts.length < 1) return done();
 
                 const newPosts: [ no: string, com: string ][] = e.detail.newPosts.map((fullId: string) => {
                     const no = fullId.split(".").pop() || "";
@@ -31,14 +31,14 @@ document.addEventListener("4chanXInitFinished", () => {
                 playlist.checking = true;
 
                 playlist.parsePosts(newPosts).then((addedPosts) => {
-                    if (! playlist.player) return abort();
+                    if (! playlist.player) return done();
                     if (addedPosts > 0) playlist.mutated = true;
-                    return ok()
+                    return done()
                 })
             }),
 
-            new Promise<void>((ok, abort) => {
-                if (e.detail.deletedPosts.length < 1) return abort();
+            new Promise<void>((done) => {
+                if (e.detail.deletedPosts.length < 1) return done();
 
                 e.detail.deletedPosts.forEach((fullId: string) => {
                     const postId = fullId.split(".").pop();
@@ -48,7 +48,7 @@ document.addEventListener("4chanXInitFinished", () => {
                     playlist.mutated = true;
                 });
 
-                return ok()
+                return done()
             })
 
         ])
