@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.2.0
+// @version     2.2.1
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @require     https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js
@@ -210,7 +210,7 @@ class Dialog {
         const close = this.node?.querySelector(".close");
         move.addEventListener("mousedown", toggleDrag);
         jump.addEventListener("click", () => { playlist.jumpTo(playlist.track); });
-        close.addEventListener("click", () => { this.toggle(true); });
+        close.addEventListener("click", () => { playlist.dialog?.toggle(true); });
         document.addEventListener("mouseup", toggleDrag);
         const tabs = this.node?.querySelector("ul");
         tabs.addEventListener("click", (e) => {
@@ -222,11 +222,11 @@ class Dialog {
             playlist.player.cuePlaylist(playlist.toPages()[parseInt(index)]);
         });
         this.shortcut?.addEventListener("click", () => {
-            if (!playlist.dialog || playlist.checking || playlist.isEmpty())
+            if (playlist.checking || playlist.isEmpty())
                 return;
             if (!playlist.player)
                 return playlist.initAPI();
-            return this.toggle();
+            return playlist.dialog?.toggle();
         });
         function toggleDrag(e) {
             if (!playlist.dialog || !playlist.dialog.node)
@@ -316,13 +316,13 @@ class Dialog {
         return document.getElementById("playlist-toggle");
     }
     toggle(close) {
-        if (close || this.node?.classList.contains("hide")) {
-            this.node?.classList.remove("hide");
-            this.shortcut?.classList.remove("disabled");
-        }
-        else {
+        if (close || !this.node?.classList.contains("hide")) {
             this.node?.classList.add("hide");
             this.shortcut?.classList.add("disabled");
+        }
+        else {
+            this.node?.classList.remove("hide");
+            this.shortcut?.classList.remove("disabled");
         }
     }
     updateTabs(amount) {
