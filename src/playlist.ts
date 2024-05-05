@@ -187,8 +187,8 @@ class Playlist {
             }, [])
         });
 
-        for (let i = 0; i < ids.length; i += 199) {
-            const chunk = ids.slice(i, i + 199);
+        for (let i = 0; i < ids.length; i += 200) {
+            const chunk = ids.slice(i, i + 200);
             output.push(chunk);
         }
 
