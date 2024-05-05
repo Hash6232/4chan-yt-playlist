@@ -19,6 +19,8 @@ class Playlist {
 
         async function fetchThread(): Promise<[ no: string, com: string ][]> {
 
+            if ([board, no].some((s) => !s || s.length < 1)) throw new Error("Unable to retrieve board and thread number.")
+
             switch(location.hostname) {
                 case "boards.4chan.org":
                     const response = await fetch("https://a.4cdn.org/" + board + "/thread/" + no + ".json");
