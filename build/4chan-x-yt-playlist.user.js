@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.3.2
+// @version     2.3.3
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @require     https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js
@@ -157,8 +157,8 @@ class Playlist {
                 return validVideos;
             }, []);
         });
-        for (let i = 0; i < ids.length; i += 199) {
-            const chunk = ids.slice(i, i + 199);
+        for (let i = 0; i < ids.length; i += 200) {
+            const chunk = ids.slice(i, i + 200);
             output.push(chunk);
         }
         return output;
