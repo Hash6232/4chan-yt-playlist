@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.3.1
+// @version     2.3.2
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @require     https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js
@@ -31,9 +31,11 @@ class Playlist {
             const posts = await fetchThread();
             if (posts.length < 1)
                 throw new Error("No post was found.");
-            return this.parsePosts(posts);
+            return this.parsePosts(posts).finally(() => this.checking = false);
         });
         async function fetchThread() {
+            if ([board, no].some((s) => !s || s.length < 1))
+                throw new Error("Unable to retrieve board and thread number.");
             switch (location.hostname) {
                 case "boards.4chan.org":
                     const response = await fetch("https://a.4cdn.org/" + board + "/thread/" + no + ".json");
@@ -75,7 +77,6 @@ class Playlist {
         }).then((posts) => {
             for (const post of posts)
                 this.posts[post[0]] = post[1];
-            this.checking = false;
             return posts.length;
         });
     }
@@ -387,7 +388,7 @@ document.addEventListener("4chanXInitFinished", () => {
                     if (addedPosts > 0)
                         playlist.mutated = true;
                     return done();
-                });
+                }).finally(() => playlist.checking = false);
             }),
             new Promise((done) => {
                 if (e.detail.deletedPosts.length < 1)
