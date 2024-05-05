@@ -2,7 +2,7 @@
 // @name        4chan X - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-X-yt-playlist
-// @version     2.3.4
+// @version     2.3.5
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -414,7 +414,7 @@ document.addEventListener("4chanXInitFinished", () => {
 unsafeWindow.onYouTubeIframeAPIReady = () => {
     playlist.player = new YT.Player("playlist", {
         width: '512', height: '288',
-        playerVars: { 'fs': 0, 'disablekb': 1, 'modestbranding': 1 },
+        playerVars: { 'fs': 0, 'disablekb': 1, 'rel': 0 },
         events: {
             "onReady": initPlaylist,
             "onStateChange": updateTrack,
