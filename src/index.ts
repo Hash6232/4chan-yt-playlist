@@ -34,7 +34,7 @@ document.addEventListener("4chanXInitFinished", () => {
                     if (! playlist.player) return done();
                     if (addedPosts > 0) playlist.mutated = true;
                     return done()
-                })
+                }).finally(() => playlist.checking = false)
             }),
 
             new Promise<void>((done) => {

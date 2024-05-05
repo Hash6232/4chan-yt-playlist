@@ -13,7 +13,7 @@ class Playlist {
             this.checking = true;
             const posts = await fetchThread();
             if (posts.length < 1) throw new Error("No post was found.");
-            return this.parsePosts(posts)
+            return this.parsePosts(posts).finally(() => this.checking = false)
 
         })
 
@@ -81,7 +81,6 @@ class Playlist {
             }, [])
         }).then((posts) => {
             for (const post of posts) this.posts[post[0]] = post[1];
-            this.checking = false;
             return posts.length
         })
     
