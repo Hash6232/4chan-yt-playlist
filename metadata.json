@@ -1,6 +1,6 @@
 {
     "name": "4chan X - YouTube Playlist",
-    "version": "2.3.3",
+    "version": "2.3.4",
     "namespace": "4chan-X-yt-playlist",
     "description": "Wraps all YouTube videos inside a thread into a playlist",
     "include": [
@@ -10,9 +10,6 @@
     "grant": [
         "GM_setValue",
         "GM_getValue"
-    ],
-    "require": [
-        "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-svg-core@1.2.35/index.min.js"
     ],
     "run-at": "document-start"
 }
