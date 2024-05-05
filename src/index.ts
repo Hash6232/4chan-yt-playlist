@@ -70,7 +70,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
 
     playlist.player = new YT.Player("playlist", {
         width: '512', height: '288',
-        playerVars: { 'fs': 0, 'disablekb': 1 },
+        playerVars: { 'fs': 0, 'disablekb': 1, 'rel': 0 },
         events: {
             "onReady": initPlaylist,
             "onStateChange": updateTrack,
