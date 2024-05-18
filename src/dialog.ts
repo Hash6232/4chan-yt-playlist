@@ -88,7 +88,7 @@ class Dialog {
 
         function toggleDrag(e: MouseEvent) {
 
-            if (! playlist.dialog?.self) return;
+            if (! playlist.dialog.self) return;
         
             switch(e.type) {
                 case "mouseup":
@@ -117,7 +117,7 @@ class Dialog {
                     playlist.dialog.snapshot.cursor[0] = e.x - rect.x;
                     playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
 
-                    if (C.fourchan && (C.fixedNav || C.fixedHeader)) {
+                    if (C.fixedNav || C.fixedHeader) {
                         const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
 
                         if (topbar) {
@@ -138,7 +138,7 @@ class Dialog {
         
         function moveDialog(e: MouseEvent) {
         
-            if (! playlist.dialog?.self) return;
+            if (! playlist.dialog.self) return;
         
             e.preventDefault(); // avoid selection while dragging
         
@@ -153,13 +153,13 @@ class Dialog {
             let minY = 0, maxY = sH - h;
         
             if (playlist.dialog.snapshot.topbar[2]) {
-                const [ y, offset, fixed, autohide ] = playlist.dialog.snapshot.topbar;
+                const [ dialogPos, dialogHeight, fixed, autohide ] = playlist.dialog.snapshot.topbar;
 
                 if (fixed && ! autohide) {
-                    if (y < offset) {
-                        minY += offset;
+                    if (dialogPos < dialogHeight) {
+                        minY += dialogHeight;
                     } else {
-                        maxY -= offset;
+                        maxY -= dialogHeight;
                     }
                 }
             }
@@ -204,17 +204,11 @@ class Dialog {
             function failedLoad() {
                 const msg = "Unable to load YouTube Iframe API.\nPress F12 and follow the instructions in the console.";
 
-                switch(true) {
-                    case C.fourchanX:
-                        document.dispatchEvent(new CustomEvent("CreateNotification", {
-                            detail: { type: "error", content: msg }
-                        }));
-                        break;
+                if (! C.fourchanX) alert(msg);
 
-                    default:
-                        alert(msg);
-                        break;
-                }
+                document.dispatchEvent(new CustomEvent("CreateNotification", {
+                    detail: { type: "error", content: msg }
+                }));
 
                 console.info("Unable to load YouTube Iframe API\n\n" +
                     "4chanX's Settings > Advanced > Javascript Whitelist\n\n" +
@@ -258,7 +252,7 @@ class Dialog {
     snapshot = {
         size: [0, 0] as [ w: number, h: number ],
         cursor: [0, 0] as [ x: number, y: number ],
-        topbar: [0, 0, false, false ] as [ y: number, offset: number, fixed: boolean, autohide: boolean ]
+        topbar: [0, 0, false, false ] as [ y: number, height: number, fixed: boolean, autohide: boolean ]
     }
 
     get self() {
