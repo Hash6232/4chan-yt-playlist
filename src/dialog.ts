@@ -204,7 +204,6 @@ class Dialog {
                 const msg = "Unable to load YouTube Iframe API.\nPress F12 and follow the instructions in the console.";
 
                 switch(true) {
-
                     case C.fourchanX:
                         document.dispatchEvent(new CustomEvent("CreateNotification", {
                             detail: { type: "error", content: msg }
@@ -214,7 +213,6 @@ class Dialog {
                     default:
                         alert(msg);
                         break;
-
                 }
 
                 console.info("Unable to load YouTube Iframe API\n\n" +

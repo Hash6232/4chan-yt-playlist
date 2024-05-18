@@ -24,8 +24,8 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
 
         let history: { [key: string]: string } = {};
         try {
-            history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
-        } catch { console.error("Failed to parse playlist history from local storage") };
+            history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
+        } catch (err) { console.error("Failed to parse playlist history from local storage"); console.error(err); };
         
         const lastPlayedTrack = history[C.board + "." + C.thread] || null;
         const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
@@ -56,11 +56,11 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             
             let history: { [key: string]: string } = {};
             try {
-                history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+                history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
                 history[C.board + "." + C.thread] = playlist.track;
-            } catch { console.error("Failed to parse playlist history from local storage") };
+            } catch (err) { console.error("Failed to parse playlist history from local storage"); console.error(err); };
             
-            localStorage.setItem("4chan-x-yt-playlist-history", JSON.stringify(history));
+            localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
     
             // Due to a change to when state 0 is returned, update playlist
             // attempts must now also happen when the next track is loaded
@@ -119,7 +119,6 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             }));
         } else {
             switch(errLvl) {
-
                 case "error":
                     console.error(output);
                     break;
@@ -131,7 +130,6 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
                 default:
                     console.info(output);
                     break;
-
             }
         }
 
