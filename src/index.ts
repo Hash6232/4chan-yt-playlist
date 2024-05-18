@@ -20,7 +20,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         playlist.state = 0;
     
         const pages = playlist.toPages();
-        playlist.dialog?.updateTabs(pages.length);
+        playlist.dialog.updateTabs(pages.length);
 
         let history: { [key: string]: string } = {};
         try {
@@ -36,7 +36,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             e.target.cuePlaylist(pages[0])
         }
 
-        playlist.dialog?.toggle();
+        playlist.dialog.toggle();
 
     };
     
@@ -57,9 +57,9 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             let history: { [key: string]: string } = {};
             try {
                 history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
-                history[C.board + "." + C.thread] = playlist.track;
-            } catch (err) { console.error("Failed to parse playlist history from local storage"); console.error(err); };
+            } catch (err) { console.error("Failed to parse playlist history from local storage."); console.error(err); };
             
+            history[C.board + "." + C.thread] = playlist.track;
             localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
     
             // Due to a change to when state 0 is returned, update playlist
