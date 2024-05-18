@@ -48,14 +48,8 @@ class Dialog {
                     break;
 
                 case C.warosu:
-                    const childNodes = [...document.body.childNodes];
-                    const delimeter = childNodes.find(n => n.nodeType === 3 &&
-                        (n as HTMLElement).nextElementSibling?.tagName === "DIV"
-                    ) as HTMLElement;
-
-                    try {
-                        delimeter.nextElementSibling?.insertAdjacentHTML("beforebegin", "[ <a class=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">playlist</a> ]");
-                    } catch { throw new Error("Unable to append toggle link."); }
+                    const lastLink = document.getElementById("p" + C.thread)?.querySelector("a:last-of-type");
+                    lastLink?.nextElementSibling?.insertAdjacentHTML("beforebegin", "[<a class=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>]");
 
                     (document.querySelector(".playlist-toggle") as HTMLElement).onclick = initOrToggle;
                     break;
@@ -280,10 +274,11 @@ class Dialog {
 
         if (close || ! this.self?.classList.contains("hide")) {
             this.self?.classList.add("hide");
-            this.toggleBtn?.classList.add("disabled");
+            if (C.fourchanX) this.toggleBtn?.classList.add("disabled");
+            
         } else {
             this.self?.classList.remove("hide");
-            this.toggleBtn?.classList.remove("disabled");
+            if (C.fourchanX) this.toggleBtn?.classList.remove("disabled");
         }
         
     }
