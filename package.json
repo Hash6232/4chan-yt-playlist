@@ -1,5 +1,5 @@
 {
-  "name": "4chan-x-yt-playlist",
+  "name": "4chan-yt-playlist",
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
