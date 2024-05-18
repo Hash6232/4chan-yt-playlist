@@ -1,95 +1,110 @@
+import { C } from "./config";
 import { Playlist } from "./playlist";
 
 class Dialog {
 
     constructor(playlist: Playlist) {
 
-        document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
+        document.addEventListener("DOMContentLoaded", () => {
 
-        switch(location.hostname) {
+            // HTML
+            document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
 
-            case "boards.4chan.org":
-                // Retrieve last saved position from storage
-                this.setPos(GM_getValue("4chan Dialog Coordinates", [ "10%", "5%", null, null ]));
+            // Dialog topbar
+            const tabs = this.self?.querySelector("ul") as HTMLUListElement;
+            const move = this.self?.querySelector(".move") as HTMLElement;
+            const jump = this.self?.querySelector(".jump") as HTMLAnchorElement;
+            const close = this.self?.querySelector(".close") as HTMLAnchorElement;
 
-                // Add dialog toggle
-                document.getElementById("shortcut-qr")?.insertAdjacentHTML("beforebegin", "<span id=\"shortcut-playlist\" class=\"shortcut brackets-wrap\"><a id=\"playlist-toggle\" class=\"disabled\" title=\"Toggle YouTube playlist\" href=\"javascript:;\"><span class=\"icon--alt-text\">YouTube Playlist</span><svg class=\"icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm0 394c0 3.3-2.7 6-6 6H54c-3.3 0-6-2.7-6-6V192h416v234z\" fill=\"currentColor\" /></svg></a></span>");
-                break;
-                
+            tabs.addEventListener("click", switchTab);
+            move.addEventListener("mousedown", toggleDrag);
+            jump.addEventListener("click", () => { playlist.jumpTo(playlist.track) });
+            close.addEventListener("click", () => { this.toggle(true) });
+            document.addEventListener("mouseup", toggleDrag);
 
-            case "warosu.org":
-                // Retrieve last saved position from storage
-                this.setPos(GM_getValue("Warosu Dialog Coordinates", [ "10%", "5%", null, null ]));
+            // Set position from cache
+            switch (true) {
+                case C.fourchan:
+                    setPos(GM_getValue("4chan Dialog Coordinates", [ "10%", "5%", null, null ]));
+                    break;
 
-                const childNodes = [...document.body.childNodes];
-                const delimeter = childNodes.find(n => n.nodeType === 3 &&
-                    (n as HTMLElement).nextElementSibling?.tagName === "DIV"
-                ) as HTMLElement;
-                    
-                if (! delimeter?.nextElementSibling) throw new Error("Unable to append toggle link.");
+                case C.warosu:
+                    setPos(GM_getValue("Warosu Dialog Coordinates", [ "10%", "5%", null, null ]));
+                    break;
+            }
 
-                delimeter.nextElementSibling.insertAdjacentHTML("beforebegin", "[ <a id=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">playlist</a> ]")
-                break;
+        });
+
+        // Toggler
+
+        document.addEventListener("DOMContentLoaded", () => {
+
+            switch (true) {
+                case C.fourchan:
+                    document.getElementById("navtopright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
+                    document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
+
+                    document.querySelectorAll(".playlist-toggle.native").forEach((l) => { (l as HTMLElement).onclick = initOrToggle });
+                    break;
+
+                case C.warosu:
+                    const childNodes = [...document.body.childNodes];
+                    const delimeter = childNodes.find(n => n.nodeType === 3 &&
+                        (n as HTMLElement).nextElementSibling?.tagName === "DIV"
+                    ) as HTMLElement;
+
+                    try {
+                        delimeter.nextElementSibling?.insertAdjacentHTML("beforebegin", "[ <a class=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">playlist</a> ]");
+                    } catch { throw new Error("Unable to append toggle link."); }
+
+                    (document.querySelector(".playlist-toggle") as HTMLElement).onclick = initOrToggle;
+                    break;
+            }
+
+        });
+
+        document.addEventListener("4chanXInitFinished", () => {
+
+            document.getElementById("shortcut-qr")?.insertAdjacentHTML("beforebegin", "<span id=\"shortcut-playlist\" class=\"shortcut brackets-wrap\"><a class=\"playlist-toggle disabled\" title=\"Toggle YouTube playlist\" href=\"javascript:;\"><span class=\"icon--alt-text\">YouTube Playlist</span><svg class=\"icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm0 394c0 3.3-2.7 6-6 6H54c-3.3 0-6-2.7-6-6V192h416v234z\" fill=\"currentColor\" /></svg></a></span>");
+
+            (document.querySelector(".playlist-toggle:not(.native)") as HTMLElement).onclick = initOrToggle;
+
+        });
+
+        // Local functions
+
+        function switchTab(e: MouseEvent) {
+
+            if (! playlist.player) return;
+            if (! (e.target as HTMLElement)?.dataset.page) return;
+            const index = (e.target as HTMLElement).dataset.page || "0";
+            playlist.player.cuePlaylist(playlist.toPages()[parseInt(index)]);
+
+        };
+
+        function initOrToggle(): void {
+
+            if (playlist.checking || playlist.isEmpty()) return;
+            if (! playlist.player) return initAPI();
+
+            return playlist.dialog?.toggle()
 
         }
 
-        // Dialog topbar
-        const move = this.node?.querySelector(".move") as HTMLElement;
-        const jump = this.node?.querySelector(".jump") as HTMLAnchorElement;
-        const close = this.node?.querySelector(".close") as HTMLAnchorElement;
-
-        move.addEventListener("mousedown", toggleDrag);
-        jump.addEventListener("click", () => { playlist.jumpTo(playlist.track) });
-        close.addEventListener("click", () => { playlist.dialog?.toggle(true) });
-
-        // Dialog drag defuser
-        document.addEventListener("mouseup", toggleDrag);
-
-        // Dialog tabs events
-        const tabs = this.node?.querySelector("ul") as HTMLUListElement;
-        tabs.addEventListener("click", (e) => {
-            if (! playlist.player) return;
-            if (! e.target || (e.target as HTMLElement).tagName !== "A") return;
-            const index = (e.target as HTMLElement).dataset.page || "0";
-            playlist.player.cuePlaylist(playlist.toPages()[parseInt(index)])
-        });
-
-        // Dialog toggle
-        this.shortcut?.addEventListener("click", () => {
-            if (playlist.checking || playlist.isEmpty()) return;
-            if (! playlist.player) return playlist.initAPI();
-
-            return playlist.dialog?.toggle()
-        })
-
-        // Drag callback functions
-
         function toggleDrag(e: MouseEvent) {
 
-            if (! playlist.dialog || ! playlist.dialog.node) return;
+            if (! playlist.dialog?.self) return;
         
             switch(e.type) {
                 case "mouseup":
-                    if (! playlist.dialog.node.classList.contains("dragging")) return;
+                    if (! playlist.dialog.dragging) return;
         
-                    playlist.dialog.node.classList.remove("dragging");
+                    playlist.dialog.dragging = false;
                     document.removeEventListener("mousemove", moveDialog);
         
-                    let key: string;
-                    switch (location.hostname) {
-                        case "boards.4chan.org":
-                            key = "4chan Dialog Coordinates";
-                            break;
-                        case "warosu.org":
-                            key = "Warosu Dialog Coordinates";
-                            break;
-                        default:
-                            return;
-                    }
-        
-                    GM_setValue(key, [ 
-                        playlist.dialog.node.style.top, playlist.dialog.node.style.right, 
-                        playlist.dialog.node.style.bottom, playlist.dialog.node.style.left 
+                    GM_setValue((C.fourchan ? "4chan" : "Warosu") + " Dialog Coordinates", [ 
+                        playlist.dialog.self.style.top, playlist.dialog.self.style.right, 
+                        playlist.dialog.self.style.bottom, playlist.dialog.self.style.left 
                     ]);
         
                     break;
@@ -99,105 +114,183 @@ class Dialog {
         
                     e.preventDefault(); // avoid selection while dragging
                     
-                    const rect = playlist.dialog.node.getBoundingClientRect();
+                    const rect = playlist.dialog.self.getBoundingClientRect();
         
-                    playlist.dialog.size[0] = rect.width;
-                    playlist.dialog.size[1] = rect.height;
+                    playlist.dialog.snapshot.size[0] = rect.width;
+                    playlist.dialog.snapshot.size[1] = rect.height;
         
-                    playlist.dialog.cursorPos[0] = e.x - rect.x;
-                    playlist.dialog.cursorPos[1] = e.y - rect.y;
-        
-                    if (document.getElementById("header-bar")) {
-                        playlist.dialog.header[0] = document.getElementById("header-bar")?.getBoundingClientRect().y || 0;
-                        playlist.dialog.header[1] = document.getElementById("header-bar")?.offsetHeight || 0;
-                        playlist.dialog.header[2] = document.documentElement.classList.contains("fixed");
-                        playlist.dialog.header[3] = document.documentElement.classList.contains("autohide");
+                    playlist.dialog.snapshot.cursor[0] = e.x - rect.x;
+                    playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
+
+                    if (C.fourchan && (C.fixedNav || C.fixedHeader)) {
+                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
+
+                        if (topbar) {
+                            playlist.dialog.snapshot.topbar[0] = topbar.getBoundingClientRect().y || 0;
+                            playlist.dialog.snapshot.topbar[1] = topbar.offsetHeight || 0;
+                            playlist.dialog.snapshot.topbar[2] = C.fourchanX ? C.fixedHeader : C.fixedNav;
+                            playlist.dialog.snapshot.topbar[3] = C.fourchanX ? C.autohideHeader : C.autohideNav;
+                        }
                     }
         
-                    playlist.dialog.node.classList.add("dragging");
+                    playlist.dialog.dragging = true;
                     document.addEventListener("mousemove", moveDialog);
         
                     break;
             }
         
-        }
+        };
         
         function moveDialog(e: MouseEvent) {
         
-            if (! playlist.dialog || ! playlist.dialog.node) return;
+            if (! playlist.dialog?.self) return;
         
             e.preventDefault(); // avoid selection while dragging
         
             const sW = document.documentElement.clientWidth,
                 sH = document.documentElement.clientHeight,
-                x = e.x - playlist.dialog.cursorPos[0],
-                y = e.y - playlist.dialog.cursorPos[1],
-                w = playlist.dialog.size[0],
-                h = playlist.dialog.size[1],
+                x = e.x - playlist.dialog.snapshot.cursor[0],
+                y = e.y - playlist.dialog.snapshot.cursor[1],
+                w = playlist.dialog.snapshot.size[0],
+                h = playlist.dialog.snapshot.size[1],
                 maxX = sW - w;
         
             let minY = 0, maxY = sH - h;
         
-            if (document.getElementById("header-bar")) {
-                const fixed = playlist.dialog.header[2];
-                const autohide = playlist.dialog.header[3];
-        
+            if (playlist.dialog.snapshot.topbar[2]) {
+                const [ y, offset, fixed, autohide ] = playlist.dialog.snapshot.topbar;
+
                 if (fixed && ! autohide) {
-                    if (playlist.dialog.header[0] < playlist.dialog.header[1]) {
-                        minY += playlist.dialog.header[1];
+                    if (y < offset) {
+                        minY += offset;
                     } else {
-                        maxY -= playlist.dialog.header[1];
+                        maxY -= offset;
                     }
                 }
             }
         
             if (y > maxY) {
-                playlist.dialog.node.style.bottom = 0 + "px";
-                playlist.dialog.node.style.removeProperty("top");
+                playlist.dialog.self.style.bottom = 0 + "px";
+                playlist.dialog.self.style.removeProperty("top");
             } else {
-                playlist.dialog.node.style.top = y > minY ? ((y * 100) / sH) + "%" : minY + "px";
-                playlist.dialog.node.style.removeProperty("bottom");
+                playlist.dialog.self.style.top = y > minY ? ((y * 100) / sH) + "%" : minY + "px";
+                playlist.dialog.self.style.removeProperty("bottom");
             }
             
             if (x > maxX) {
-                playlist.dialog.node.style.right = 0 + "px";
-                playlist.dialog.node.style.removeProperty("left");
+                playlist.dialog.self.style.right = 0 + "px";
+                playlist.dialog.self.style.removeProperty("left");
             } else {
-                playlist.dialog.node.style.left = x > 0 ? ((x * 100) / sW) + "%" : 0 + "px";
-                playlist.dialog.node.style.removeProperty("right");
+                playlist.dialog.self.style.left = x > 0 ? ((x * 100) / sW) + "%" : 0 + "px";
+                playlist.dialog.self.style.removeProperty("right");
             }
         
-        }
+        };
+
+        function initAPI() {
+
+            if (playlist.state > 0 || playlist.player) return;
+            if (playlist.state < 0) return failedLoad();
+            
+            playlist.state = 1;
+        
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            document.head.appendChild(script);
+        
+            setTimeout(() => {
+                if (playlist.state < 1) return;
+                playlist.state = -1;
+                failedLoad();
+            }, 5000);
+        
+            script.onerror = () => { failedLoad(); playlist.state = -1; };
+        
+            function failedLoad() {
+                const msg = "Unable to load YouTube Iframe API.\nPress F12 and follow the instructions in the console.";
+
+                switch(true) {
+
+                    case C.fourchanX:
+                        document.dispatchEvent(new CustomEvent("CreateNotification", {
+                            detail: { type: "error", content: msg }
+                        }));
+                        break;
+
+                    default:
+                        alert(msg);
+                        break;
+
+                }
+
+                console.info("Unable to load YouTube Iframe API\n\n" +
+                    "4chanX's Settings > Advanced > Javascript Whitelist\n\n" +
+                    "  https://www.youtube.com/iframe_api\n" +
+                    "  https://www.youtube.com/s/player/" +
+                    "\n\nFilters in your AdBlock extension\n\n" +
+                    "  @@||www.youtube.com/iframe_api$script,domain=4chan.org\n" +
+                    "  @@||www.youtube.com/s/player/*$script,domain=4chan.org\n"
+                )
+            }
+        
+        };
+
+        function setPos(coordinates: (string | null)[]) {            
+            coordinates.forEach((pos, index) => {
+                if (! pos || ! playlist.dialog?.self) return;
+    
+                switch(index) {
+                    case 0:
+                        playlist.dialog.self.style.top = pos;
+                        break;
+                    
+                    case 1:
+                        playlist.dialog.self.style.right = pos;
+                        break;
+                    
+                    case 2:
+                        playlist.dialog.self.style.bottom = pos;
+                        break;
+                    
+                    case 3:
+                        playlist.dialog.self.style.left = pos;
+                        break;
+                }
+            })
+        };
 
     }
 
-    size: [ w: number, h: number ] = [ 0, 0 ];
-    cursorPos: [ x: number, y: number ] = [ 0, 0 ];
-    header: [ y: number, o: number, fixed: boolean, autohide: boolean ] = [ 0, 0, true, false ];
+    dragging = false;
+    snapshot = {
+        size: [0, 0] as [ w: number, h: number ],
+        cursor: [0, 0] as [ x: number, y: number ],
+        topbar: [0, 0, false, false ] as [ y: number, offset: number, fixed: boolean, autohide: boolean ]
+    }
 
-    get node() {
+    get self() {
         return document.getElementById("playlist-embed")
     }
 
-    get shortcut() {
-        return document.getElementById("playlist-toggle")
+    get toggleBtn() {
+        return document.querySelector(".playlist-toggle:not(.native)") as HTMLElement | null
     }
 
     toggle(close?: boolean) {
 
-        if (close || ! this.node?.classList.contains("hide")) {
-            this.node?.classList.add("hide");
-            this.shortcut?.classList.add("disabled");
+        if (close || ! this.self?.classList.contains("hide")) {
+            this.self?.classList.add("hide");
+            this.toggleBtn?.classList.add("disabled");
         } else {
-            this.node?.classList.remove("hide");
-            this.shortcut?.classList.remove("disabled");
+            this.self?.classList.remove("hide");
+            this.toggleBtn?.classList.remove("disabled");
         }
         
     }
 
     updateTabs(amount: number) {
 
-        const tabs = this.node?.querySelector("ul");
+        const tabs = this.self?.querySelector("ul");
         if (! tabs) return console.error("No <ul> present in dialog.");
         while (tabs?.lastChild) tabs.removeChild(tabs.lastChild);
 
@@ -207,30 +300,6 @@ class Dialog {
 
     }
 
-    setPos(coordinates: (string | null)[]) {
-        coordinates.forEach((pos, index) => {
-            if (! pos || ! this.node) return;
-
-            switch(index) {
-                case 0:
-                    this.node.style.top = pos;
-                    break;
-                
-                case 1:
-                    this.node.style.right = pos;
-                    break;
-                
-                case 2:
-                    this.node.style.bottom = pos;
-                    break;
-                
-                case 3:
-                    this.node.style.left = pos;
-                    break;
-            }
-        })
-    }
-
 }
 
-export { Dialog }
+ export { Dialog }
