@@ -1,9 +1,7 @@
 import { C } from "./config";
 import { Playlist } from "./playlist";
-import { Dialog } from "./dialog";
 
 const playlist = new Playlist();
-playlist.dialog = new Dialog(playlist);
 
 unsafeWindow.onYouTubeIframeAPIReady = () => {
 

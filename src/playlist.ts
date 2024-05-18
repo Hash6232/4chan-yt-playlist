@@ -100,7 +100,7 @@ class Playlist {
 
     posts: { [key: string]: Video[] } = {};
 
-    dialog: Dialog | null = null;
+    dialog: Dialog = new Dialog(this);
 
     player: YT.Player | null = null;
     track = "";
