@@ -133,7 +133,7 @@ class Dialog {
                     playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
 
                     if (C.fixedNav || C.fixedHeader) {
-                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
+                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : C.classicNav ? "boardNavDesktop" : "boardNavMobile");
 
                         if (topbar) {
                             playlist.dialog.snapshot.topbar[0] = topbar.getBoundingClientRect().y || 0;

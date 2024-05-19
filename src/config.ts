@@ -5,6 +5,7 @@ declare global {
         Config: { 
             disableAll: boolean,
             dropDownNav: boolean,
+            classicNav: boolean,
             autoHideNav: boolean
          },
          
@@ -25,6 +26,7 @@ const C = new class Conf {
         document.addEventListener("4chanMainInit", () => {
             this.native = !unsafeWindow.Config.disableAll;
             this.fixedNav = unsafeWindow.Config.dropDownNav;
+            this.classicNav = unsafeWindow.Config.classicNav;
             this.autohideNav = unsafeWindow.Config.autoHideNav;
             this.initFinished = true;
         });
@@ -45,6 +47,7 @@ const C = new class Conf {
     // 4chan Native
     native = true;
     fixedNav = false;
+    classicNav = false;
     autohideNav = false;
     
     // 4chan X
