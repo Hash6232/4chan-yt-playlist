@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.0
+// @version     2.4.1
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -45,6 +45,226 @@ const C = new class Conf {
     }
 };
 
+class Dialog {
+    constructor(playlist) {
+        this.dragging = false;
+        this.snapshot = {
+            size: [0, 0],
+            cursor: [0, 0],
+            topbar: [0, 0, false, false]
+        };
+        document.addEventListener("DOMContentLoaded", () => {
+            document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
+            const tabs = this.self?.querySelector("ul");
+            const move = this.self?.querySelector(".move");
+            const jump = this.self?.querySelector(".jump");
+            const close = this.self?.querySelector(".close");
+            tabs.addEventListener("click", switchTab);
+            move.addEventListener("mousedown", toggleDrag);
+            jump.addEventListener("click", () => { playlist.jumpTo(playlist.track); });
+            close.addEventListener("click", () => { this.toggle(true); });
+            document.addEventListener("mouseup", toggleDrag);
+            switch (true) {
+                case C.fourchan:
+                    setPos(GM_getValue("4chan Dialog Coordinates", ["10%", "5%", null, null]));
+                    break;
+                case C.warosu:
+                    setPos(GM_getValue("Warosu Dialog Coordinates", ["10%", "5%", null, null]));
+                    break;
+            }
+        });
+        document.addEventListener("DOMContentLoaded", () => {
+            switch (true) {
+                case C.fourchan:
+                    document.getElementById("navtopright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
+                    document.getElementById("navbotright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
+                    document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
+                    document.querySelectorAll(".playlist-toggle.native").forEach((l) => { l.onclick = initOrToggle; });
+                    break;
+                case C.warosu:
+                    const lastLink = document.getElementById("p" + C.thread)?.querySelector("a:last-of-type");
+                    lastLink?.nextElementSibling?.insertAdjacentHTML("beforebegin", "[<a class=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>]");
+                    document.querySelector(".playlist-toggle").onclick = initOrToggle;
+                    break;
+            }
+        });
+        document.addEventListener("4chanXInitFinished", () => {
+            document.getElementById("shortcut-qr")?.insertAdjacentHTML("beforebegin", "<span id=\"shortcut-playlist\" class=\"shortcut brackets-wrap\"><a class=\"playlist-toggle disabled\" title=\"Toggle YouTube playlist\" href=\"javascript:;\"><span class=\"icon--alt-text\">YouTube Playlist</span><svg class=\"icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm0 394c0 3.3-2.7 6-6 6H54c-3.3 0-6-2.7-6-6V192h416v234z\" fill=\"currentColor\" /></svg></a></span>");
+            document.querySelector(".playlist-toggle:not(.native)").onclick = initOrToggle;
+        });
+        function switchTab(e) {
+            if (!playlist.player)
+                return;
+            if (!e.target?.dataset.page)
+                return;
+            const index = e.target.dataset.page || "0";
+            playlist.player.cuePlaylist(playlist.toPages()[parseInt(index)]);
+        }
+        function initOrToggle() {
+            if (playlist.checking || playlist.isEmpty())
+                return;
+            if (!playlist.player)
+                return initAPI();
+            return playlist.dialog?.toggle();
+        }
+        function toggleDrag(e) {
+            if (!playlist.dialog.self)
+                return;
+            switch (e.type) {
+                case "mouseup":
+                    if (!playlist.dialog.dragging)
+                        return;
+                    playlist.dialog.dragging = false;
+                    document.removeEventListener("mousemove", moveDialog);
+                    GM_setValue((C.fourchan ? "4chan" : "Warosu") + " Dialog Coordinates", [
+                        playlist.dialog.self.style.top, playlist.dialog.self.style.right,
+                        playlist.dialog.self.style.bottom, playlist.dialog.self.style.left
+                    ]);
+                    break;
+                case "mousedown":
+                    if (e.button !== 0)
+                        return;
+                    e.preventDefault();
+                    const rect = playlist.dialog.self.getBoundingClientRect();
+                    playlist.dialog.snapshot.size[0] = rect.width;
+                    playlist.dialog.snapshot.size[1] = rect.height;
+                    playlist.dialog.snapshot.cursor[0] = e.x - rect.x;
+                    playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
+                    if (C.fixedNav || C.fixedHeader) {
+                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
+                        if (topbar) {
+                            playlist.dialog.snapshot.topbar[0] = topbar.getBoundingClientRect().y || 0;
+                            playlist.dialog.snapshot.topbar[1] = topbar.offsetHeight || 0;
+                            playlist.dialog.snapshot.topbar[2] = C.fourchanX ? C.fixedHeader : C.fixedNav;
+                            playlist.dialog.snapshot.topbar[3] = C.fourchanX ? C.autohideHeader : C.autohideNav;
+                        }
+                    }
+                    playlist.dialog.dragging = true;
+                    document.addEventListener("mousemove", moveDialog);
+                    break;
+            }
+        }
+        function moveDialog(e) {
+            if (!playlist.dialog.self)
+                return;
+            e.preventDefault();
+            const sW = document.documentElement.clientWidth, sH = document.documentElement.clientHeight, x = e.x - playlist.dialog.snapshot.cursor[0], y = e.y - playlist.dialog.snapshot.cursor[1], w = playlist.dialog.snapshot.size[0], h = playlist.dialog.snapshot.size[1], maxX = sW - w;
+            let minY = 0, maxY = sH - h;
+            if (playlist.dialog.snapshot.topbar[2]) {
+                const [dialogPos, dialogHeight, fixed, autohide] = playlist.dialog.snapshot.topbar;
+                if (fixed && !autohide) {
+                    if (dialogPos < dialogHeight) {
+                        minY += dialogHeight;
+                    }
+                    else {
+                        maxY -= dialogHeight;
+                    }
+                }
+            }
+            if (y > maxY) {
+                playlist.dialog.self.style.bottom = 0 + "px";
+                playlist.dialog.self.style.removeProperty("top");
+            }
+            else {
+                playlist.dialog.self.style.top = y > minY ? ((y * 100) / sH) + "%" : minY + "px";
+                playlist.dialog.self.style.removeProperty("bottom");
+            }
+            if (x > maxX) {
+                playlist.dialog.self.style.right = 0 + "px";
+                playlist.dialog.self.style.removeProperty("left");
+            }
+            else {
+                playlist.dialog.self.style.left = x > 0 ? ((x * 100) / sW) + "%" : 0 + "px";
+                playlist.dialog.self.style.removeProperty("right");
+            }
+        }
+        function initAPI() {
+            if (playlist.state > 0 || playlist.player)
+                return;
+            if (playlist.state < 0)
+                return failedLoad();
+            playlist.state = 1;
+            const script = document.createElement("script");
+            script.src = "https://www.youtube.com/iframe_api";
+            document.head.appendChild(script);
+            setTimeout(() => {
+                if (playlist.state < 1)
+                    return;
+                playlist.state = -1;
+                failedLoad();
+            }, 5000);
+            script.onerror = () => { failedLoad(); playlist.state = -1; };
+            function failedLoad() {
+                const msg = "Unable to load YouTube Iframe API.\nPress F12 and follow the instructions in the console.";
+                if (!C.fourchanX)
+                    alert(msg);
+                document.dispatchEvent(new CustomEvent("CreateNotification", {
+                    detail: { type: "error", content: msg }
+                }));
+                console.info("Unable to load YouTube Iframe API\n\n" +
+                    "4chanX's Settings > Advanced > Javascript Whitelist\n\n" +
+                    "  https://www.youtube.com/iframe_api\n" +
+                    "  https://www.youtube.com/s/player/" +
+                    "\n\nFilters in your AdBlock extension\n\n" +
+                    "  @@||www.youtube.com/iframe_api$script,domain=4chan.org\n" +
+                    "  @@||www.youtube.com/s/player/*$script,domain=4chan.org\n");
+            }
+        }
+        function setPos(coordinates) {
+            coordinates.forEach((pos, index) => {
+                if (!pos || !playlist.dialog?.self)
+                    return;
+                switch (index) {
+                    case 0:
+                        playlist.dialog.self.style.top = pos;
+                        break;
+                    case 1:
+                        playlist.dialog.self.style.right = pos;
+                        break;
+                    case 2:
+                        playlist.dialog.self.style.bottom = pos;
+                        break;
+                    case 3:
+                        playlist.dialog.self.style.left = pos;
+                        break;
+                }
+            });
+        }
+    }
+    get self() {
+        return document.getElementById("playlist-embed");
+    }
+    get toggleBtn() {
+        return document.querySelector(".playlist-toggle:not(.native)");
+    }
+    toggle(close) {
+        if (close || !this.self?.classList.contains("hide")) {
+            this.self?.classList.add("hide");
+            if (!C.fourchanX)
+                return;
+            const button = document.getElementById("shortcut-playlist")?.firstElementChild;
+            button?.classList.add("disabled");
+        }
+        else {
+            this.self?.classList.remove("hide");
+            if (!C.fourchanX)
+                return;
+            const button = document.getElementById("shortcut-playlist")?.firstElementChild;
+            button?.classList.remove("disabled");
+        }
+    }
+    updateTabs(amount) {
+        const tabs = this.self?.querySelector("ul");
+        if (!tabs)
+            return console.error("No <ul> present in dialog.");
+        while (tabs?.lastChild)
+            tabs.removeChild(tabs.lastChild);
+        for (let i = 0; i < amount; i++) {
+            tabs.insertAdjacentHTML("beforeend", `<li><a href="javascript:;" data-page="${i}">${i + 1}</a></li>`);
+        }
+    }
+}
+
 class Playlist {
     constructor() {
         this.checking = false;
@@ -52,7 +272,7 @@ class Playlist {
         this.playing = false;
         this.state = 0;
         this.posts = {};
-        this.dialog = null;
+        this.dialog = new Dialog(this);
         this.player = null;
         this.track = "";
         this.regex = /(?:https?:\/\/)?(?:www\.)?youtu(?:\.be\/|be.com\/\S*?(?:watch|embed)(?:(?:(?=\/[-a-zA-Z0-9_]{11,}(?!\S))\/)|(?:\S*?v=|v\/)))([-a-zA-Z0-9_]{11,})/g;
@@ -236,233 +456,7 @@ class Playlist {
     ;
 }
 
-class Dialog {
-    constructor(playlist) {
-        this.dragging = false;
-        this.snapshot = {
-            size: [0, 0],
-            cursor: [0, 0],
-            topbar: [0, 0, false, false]
-        };
-        document.addEventListener("DOMContentLoaded", () => {
-            document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
-            const tabs = this.self?.querySelector("ul");
-            const move = this.self?.querySelector(".move");
-            const jump = this.self?.querySelector(".jump");
-            const close = this.self?.querySelector(".close");
-            tabs.addEventListener("click", switchTab);
-            move.addEventListener("mousedown", toggleDrag);
-            jump.addEventListener("click", () => { playlist.jumpTo(playlist.track); });
-            close.addEventListener("click", () => { this.toggle(true); });
-            document.addEventListener("mouseup", toggleDrag);
-            switch (true) {
-                case C.fourchan:
-                    setPos(GM_getValue("4chan Dialog Coordinates", ["10%", "5%", null, null]));
-                    break;
-                case C.warosu:
-                    setPos(GM_getValue("Warosu Dialog Coordinates", ["10%", "5%", null, null]));
-                    break;
-            }
-        });
-        document.addEventListener("DOMContentLoaded", () => {
-            switch (true) {
-                case C.fourchan:
-                    document.getElementById("navtopright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
-                    document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
-                    document.querySelectorAll(".playlist-toggle.native").forEach((l) => { l.onclick = initOrToggle; });
-                    break;
-                case C.warosu:
-                    const childNodes = [...document.body.childNodes];
-                    const delimeter = childNodes.find(n => n.nodeType === 3 &&
-                        n.nextElementSibling?.tagName === "DIV");
-                    try {
-                        delimeter.nextElementSibling?.insertAdjacentHTML("beforebegin", "[ <a class=\"playlist-toggle\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">playlist</a> ]");
-                    }
-                    catch {
-                        throw new Error("Unable to append toggle link.");
-                    }
-                    document.querySelector(".playlist-toggle").onclick = initOrToggle;
-                    break;
-            }
-        });
-        document.addEventListener("4chanXInitFinished", () => {
-            document.getElementById("shortcut-qr")?.insertAdjacentHTML("beforebegin", "<span id=\"shortcut-playlist\" class=\"shortcut brackets-wrap\"><a class=\"playlist-toggle disabled\" title=\"Toggle YouTube playlist\" href=\"javascript:;\"><span class=\"icon--alt-text\">YouTube Playlist</span><svg class=\"icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M464 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm0 394c0 3.3-2.7 6-6 6H54c-3.3 0-6-2.7-6-6V192h416v234z\" fill=\"currentColor\" /></svg></a></span>");
-            document.querySelector(".playlist-toggle:not(.native)").onclick = initOrToggle;
-        });
-        function switchTab(e) {
-            if (!playlist.player)
-                return;
-            if (!e.target?.dataset.page)
-                return;
-            const index = e.target.dataset.page || "0";
-            playlist.player.cuePlaylist(playlist.toPages()[parseInt(index)]);
-        }
-        function initOrToggle() {
-            if (playlist.checking || playlist.isEmpty())
-                return;
-            if (!playlist.player)
-                return initAPI();
-            return playlist.dialog?.toggle();
-        }
-        function toggleDrag(e) {
-            if (!playlist.dialog?.self)
-                return;
-            switch (e.type) {
-                case "mouseup":
-                    if (!playlist.dialog.dragging)
-                        return;
-                    playlist.dialog.dragging = false;
-                    document.removeEventListener("mousemove", moveDialog);
-                    GM_setValue((C.fourchan ? "4chan" : "Warosu") + " Dialog Coordinates", [
-                        playlist.dialog.self.style.top, playlist.dialog.self.style.right,
-                        playlist.dialog.self.style.bottom, playlist.dialog.self.style.left
-                    ]);
-                    break;
-                case "mousedown":
-                    if (e.button !== 0)
-                        return;
-                    e.preventDefault();
-                    const rect = playlist.dialog.self.getBoundingClientRect();
-                    playlist.dialog.snapshot.size[0] = rect.width;
-                    playlist.dialog.snapshot.size[1] = rect.height;
-                    playlist.dialog.snapshot.cursor[0] = e.x - rect.x;
-                    playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
-                    if (C.fourchan && (C.fixedNav || C.fixedHeader)) {
-                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
-                        if (topbar) {
-                            playlist.dialog.snapshot.topbar[0] = topbar.getBoundingClientRect().y || 0;
-                            playlist.dialog.snapshot.topbar[1] = topbar.offsetHeight || 0;
-                            playlist.dialog.snapshot.topbar[2] = C.fourchanX ? C.fixedHeader : C.fixedNav;
-                            playlist.dialog.snapshot.topbar[3] = C.fourchanX ? C.autohideHeader : C.autohideNav;
-                        }
-                    }
-                    playlist.dialog.dragging = true;
-                    document.addEventListener("mousemove", moveDialog);
-                    break;
-            }
-        }
-        function moveDialog(e) {
-            if (!playlist.dialog?.self)
-                return;
-            e.preventDefault();
-            const sW = document.documentElement.clientWidth, sH = document.documentElement.clientHeight, x = e.x - playlist.dialog.snapshot.cursor[0], y = e.y - playlist.dialog.snapshot.cursor[1], w = playlist.dialog.snapshot.size[0], h = playlist.dialog.snapshot.size[1], maxX = sW - w;
-            let minY = 0, maxY = sH - h;
-            if (playlist.dialog.snapshot.topbar[2]) {
-                const [y, offset, fixed, autohide] = playlist.dialog.snapshot.topbar;
-                if (fixed && !autohide) {
-                    if (y < offset) {
-                        minY += offset;
-                    }
-                    else {
-                        maxY -= offset;
-                    }
-                }
-            }
-            if (y > maxY) {
-                playlist.dialog.self.style.bottom = 0 + "px";
-                playlist.dialog.self.style.removeProperty("top");
-            }
-            else {
-                playlist.dialog.self.style.top = y > minY ? ((y * 100) / sH) + "%" : minY + "px";
-                playlist.dialog.self.style.removeProperty("bottom");
-            }
-            if (x > maxX) {
-                playlist.dialog.self.style.right = 0 + "px";
-                playlist.dialog.self.style.removeProperty("left");
-            }
-            else {
-                playlist.dialog.self.style.left = x > 0 ? ((x * 100) / sW) + "%" : 0 + "px";
-                playlist.dialog.self.style.removeProperty("right");
-            }
-        }
-        function initAPI() {
-            if (playlist.state > 0 || playlist.player)
-                return;
-            if (playlist.state < 0)
-                return failedLoad();
-            playlist.state = 1;
-            const script = document.createElement("script");
-            script.src = "https://www.youtube.com/iframe_api";
-            document.head.appendChild(script);
-            setTimeout(() => {
-                if (playlist.state < 1)
-                    return;
-                playlist.state = -1;
-                failedLoad();
-            }, 5000);
-            script.onerror = () => { failedLoad(); playlist.state = -1; };
-            function failedLoad() {
-                const msg = "Unable to load YouTube Iframe API.\nPress F12 and follow the instructions in the console.";
-                switch (true) {
-                    case C.fourchanX:
-                        document.dispatchEvent(new CustomEvent("CreateNotification", {
-                            detail: { type: "error", content: msg }
-                        }));
-                        break;
-                    default:
-                        alert(msg);
-                        break;
-                }
-                console.info("Unable to load YouTube Iframe API\n\n" +
-                    "4chanX's Settings > Advanced > Javascript Whitelist\n\n" +
-                    "  https://www.youtube.com/iframe_api\n" +
-                    "  https://www.youtube.com/s/player/" +
-                    "\n\nFilters in your AdBlock extension\n\n" +
-                    "  @@||www.youtube.com/iframe_api$script,domain=4chan.org\n" +
-                    "  @@||www.youtube.com/s/player/*$script,domain=4chan.org\n");
-            }
-        }
-        function setPos(coordinates) {
-            coordinates.forEach((pos, index) => {
-                if (!pos || !playlist.dialog?.self)
-                    return;
-                switch (index) {
-                    case 0:
-                        playlist.dialog.self.style.top = pos;
-                        break;
-                    case 1:
-                        playlist.dialog.self.style.right = pos;
-                        break;
-                    case 2:
-                        playlist.dialog.self.style.bottom = pos;
-                        break;
-                    case 3:
-                        playlist.dialog.self.style.left = pos;
-                        break;
-                }
-            });
-        }
-    }
-    get self() {
-        return document.getElementById("playlist-embed");
-    }
-    get toggleBtn() {
-        return document.querySelector(".playlist-toggle:not(.native)");
-    }
-    toggle(close) {
-        if (close || !this.self?.classList.contains("hide")) {
-            this.self?.classList.add("hide");
-            this.toggleBtn?.classList.add("disabled");
-        }
-        else {
-            this.self?.classList.remove("hide");
-            this.toggleBtn?.classList.remove("disabled");
-        }
-    }
-    updateTabs(amount) {
-        const tabs = this.self?.querySelector("ul");
-        if (!tabs)
-            return console.error("No <ul> present in dialog.");
-        while (tabs?.lastChild)
-            tabs.removeChild(tabs.lastChild);
-        for (let i = 0; i < amount; i++) {
-            tabs.insertAdjacentHTML("beforeend", `<li><a href="javascript:;" data-page="${i}">${i + 1}</a></li>`);
-        }
-    }
-}
-
 const playlist = new Playlist();
-playlist.dialog = new Dialog(playlist);
 unsafeWindow.onYouTubeIframeAPIReady = () => {
     playlist.player = new YT.Player("playlist", {
         width: '512', height: '288',
@@ -476,13 +470,14 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
     function initPlaylist(e) {
         playlist.state = 0;
         const pages = playlist.toPages();
-        playlist.dialog?.updateTabs(pages.length);
+        playlist.dialog.updateTabs(pages.length);
         let history = {};
         try {
-            history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
+            history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
         }
-        catch {
+        catch (err) {
             console.error("Failed to parse playlist history from local storage");
+            console.error(err);
         }
         const lastPlayedTrack = history[C.board + "." + C.thread] || null;
         const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
@@ -492,7 +487,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         else {
             e.target.cuePlaylist(pages[0]);
         }
-        playlist.dialog?.toggle();
+        playlist.dialog.toggle();
     }
     function updateTrack(e) {
         if (e.data == 0) {
@@ -505,13 +500,14 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             playlist.track = e.target.getVideoUrl().split("=").pop() || "";
             let history = {};
             try {
-                history = JSON.parse(localStorage.getItem("4chan-x-yt-playlist-history") || "{}");
-                history[C.board + "." + C.thread] = playlist.track;
+                history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
             }
-            catch {
-                console.error("Failed to parse playlist history from local storage");
+            catch (err) {
+                console.error("Failed to parse playlist history from local storage.");
+                console.error(err);
             }
-            localStorage.setItem("4chan-x-yt-playlist-history", JSON.stringify(history));
+            history[C.board + "." + C.thread] = playlist.track;
+            localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
             if (playlist.mutated)
                 playlist.updatePlayer();
         }
