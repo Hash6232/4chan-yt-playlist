@@ -66,6 +66,10 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             // attempts must now also happen when the next track is loaded
             if (playlist.mutated) playlist.updatePlayer();
 
+            // Reset spinning animation when using manual reload button
+            const icon = playlist.dialog.self?.querySelector(".reload .icon");
+            icon?.classList.remove("spin");
+
         }
     
         // This has to stay at the bottom or it will mess with prev isPlaying checks
@@ -139,12 +143,12 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}";
+    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}:root.fourchan-x #playlist-embed .reload{transform:translate(0,1px);}#playlist-embed .reload{margin-right:.25em;}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}:root:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}#playlist-embed .icon{height:12px}#playlist-embed .icon.spin{transform:rotate(360deg);-webkit-transition:transform .25s ease-in;-moz-transition:transform .25s ease-in;-ms-transition:transform .25s ease-in;-o-transition:transform .25s ease-in;transition:transform .25s ease-in}";
 
     switch (true) {
         case C.fourchan:
             const currentStyle = getComputedStyle(document.querySelector(".post.reply") as HTMLElement);
-            css += `:root.fourchan-x:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}:root:not(.fourchan-x) .dialog{background-color:${currentStyle["backgroundColor"]};border:1px solid ${currentStyle["borderRightColor"]};box-shadow:0 1px 2px rgba(0,0,0,.15)}`;
+            css += `:root:not(.fourchan-x) .dialog{background-color:${currentStyle["backgroundColor"]};border:1px solid ${currentStyle["borderRightColor"]};box-shadow:0 1px 2px rgba(0,0,0,.15)}`;
             break;
 
         case C.warosu:

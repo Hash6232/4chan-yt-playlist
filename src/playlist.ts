@@ -241,6 +241,31 @@ class Playlist {
 
     };
 
+    reload(): void {
+
+        if (!this.player) return;
+
+        const pages: string[][] = this.toPages();
+        const page = pages.findIndex(p => p.includes(this.track));
+
+        if (page > -1) {
+            const index = pages[page].indexOf(this.track),
+            trackTime = this.player.getCurrentTime();
+
+            if (this.playing) {
+                this.player.loadPlaylist(pages[page], index, trackTime);
+            } else {
+                this.player.cuePlaylist(pages[page], index, trackTime);
+            }
+        } else {
+            if (this.playing) {
+                this.player.loadPlaylist(pages[0]);
+            } else {
+                this.player.loadPlaylist(pages[0]);
+            }
+        }
+    }
+
 }
 
 export { Playlist }
