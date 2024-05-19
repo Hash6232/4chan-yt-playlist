@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.1
+// @version     2.4.2
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -16,6 +16,7 @@ const C = new class Conf {
         this.warosu = location.hostname === "warosu.org";
         this.native = true;
         this.fixedNav = false;
+        this.classicNav = false;
         this.autohideNav = false;
         this.fourchanX = false;
         const pathname = location.pathname.slice(1).split("/thread/");
@@ -26,6 +27,7 @@ const C = new class Conf {
         document.addEventListener("4chanMainInit", () => {
             this.native = !unsafeWindow.Config.disableAll;
             this.fixedNav = unsafeWindow.Config.dropDownNav;
+            this.classicNav = unsafeWindow.Config.classicNav;
             this.autohideNav = unsafeWindow.Config.autoHideNav;
             this.initFinished = true;
         });
@@ -54,12 +56,14 @@ class Dialog {
             topbar: [0, 0, false, false]
         };
         document.addEventListener("DOMContentLoaded", () => {
-            document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
+            document.body.insertAdjacentHTML("beforeend", "<div id=\"playlist-embed\" class=\"dialog hide\"><div><a class=\"reload\" href=\"javascript:;\" title=\"Reload playlist\"><svg class=\"icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path d=\"M370.7 133.3C339.5 104 298.9 88 255.8 88c-77.5 .1-144.3 53.2-162.8 126.9-1.3 5.4-6.1 9.2-11.7 9.2H24.1c-7.5 0-13.2-6.8-11.8-14.2C33.9 94.9 134.8 8 256 8c66.4 0 126.8 26.1 171.3 68.7L463 41C478.1 25.9 504 36.6 504 57.9V192c0 13.3-10.7 24-24 24H345.9c-21.4 0-32.1-25.9-17-41l41.8-41.7zM32 296h134.1c21.4 0 32.1 25.9 17 41l-41.8 41.8c31.3 29.3 71.8 45.3 114.9 45.3 77.4-.1 144.3-53.1 162.8-126.8 1.3-5.4 6.1-9.2 11.7-9.2h57.3c7.5 0 13.2 6.8 11.8 14.2C478.1 417.1 377.2 504 256 504c-66.4 0-126.8-26.1-171.3-68.7L49 471C33.9 486.1 8 475.4 8 454.1V320c0-13.3 10.7-24 24-24z\" fill=\"currentColor\" /></svg></a><ul class=\"tabs\"></ul><div class=\"move\"></div><a class=\"jump\" href=\"javascript:;\" title=\"Jump to post\">→</a><a class=\"close\" href=\"javascript:;\" title=\"Close\">×</a></div><div id=\"playlist\"></div></div>");
             const tabs = this.self?.querySelector("ul");
+            const reload = this.self?.querySelector(".reload");
             const move = this.self?.querySelector(".move");
             const jump = this.self?.querySelector(".jump");
             const close = this.self?.querySelector(".close");
             tabs.addEventListener("click", switchTab);
+            reload.addEventListener("click", reloadPlaylist);
             move.addEventListener("mousedown", toggleDrag);
             jump.addEventListener("click", () => { playlist.jumpTo(playlist.track); });
             close.addEventListener("click", () => { this.toggle(true); });
@@ -72,14 +76,22 @@ class Dialog {
                     setPos(GM_getValue("Warosu Dialog Coordinates", ["10%", "5%", null, null]));
                     break;
             }
+            function reloadPlaylist(e) {
+                const icon = e.currentTarget?.firstElementChild;
+                icon?.classList.add("spin");
+                return playlist.reload();
+            }
         });
         document.addEventListener("DOMContentLoaded", () => {
             switch (true) {
                 case C.fourchan:
                     document.getElementById("navtopright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
                     document.getElementById("navbotright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
-                    document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
-                    document.querySelectorAll(".playlist-toggle.native").forEach((l) => { l.onclick = initOrToggle; });
+                    document.addEventListener("4chanParsingDone", () => {
+                        document.getElementById("settingsWindowLinkClassic")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>");
+                        document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
+                        document.querySelectorAll(".playlist-toggle.native").forEach((l) => { l.onclick = initOrToggle; });
+                    });
                     break;
                 case C.warosu:
                     const lastLink = document.getElementById("p" + C.thread)?.querySelector("a:last-of-type");
@@ -131,7 +143,7 @@ class Dialog {
                     playlist.dialog.snapshot.cursor[0] = e.x - rect.x;
                     playlist.dialog.snapshot.cursor[1] = e.y - rect.y;
                     if (C.fixedNav || C.fixedHeader) {
-                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : "boardNavMobile");
+                        const topbar = document.getElementById(C.fourchanX ? "header-bar" : C.classicNav ? "boardNavDesktop" : "boardNavMobile");
                         if (topbar) {
                             playlist.dialog.snapshot.topbar[0] = topbar.getBoundingClientRect().y || 0;
                             playlist.dialog.snapshot.topbar[1] = topbar.offsetHeight || 0;
@@ -454,6 +466,29 @@ class Playlist {
         return true;
     }
     ;
+    reload() {
+        if (!this.player)
+            return;
+        const pages = this.toPages();
+        const page = pages.findIndex(p => p.includes(this.track));
+        if (page > -1) {
+            const index = pages[page].indexOf(this.track), trackTime = this.player.getCurrentTime();
+            if (this.playing) {
+                this.player.loadPlaylist(pages[page], index, trackTime);
+            }
+            else {
+                this.player.cuePlaylist(pages[page], index, trackTime);
+            }
+        }
+        else {
+            if (this.playing) {
+                this.player.loadPlaylist(pages[0]);
+            }
+            else {
+                this.player.loadPlaylist(pages[0]);
+            }
+        }
+    }
 }
 
 const playlist = new Playlist();
@@ -510,6 +545,8 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
             if (playlist.mutated)
                 playlist.updatePlayer();
+            const icon = playlist.dialog.self?.querySelector(".reload .icon");
+            icon?.classList.remove("spin");
         }
         playlist.playing = (e.data == 1 || e.data == 3) ? true : false;
     }
@@ -565,11 +602,15 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
     }
 };
 document.addEventListener("DOMContentLoaded", () => {
-    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}";
+    if (C.fourchan)
+        document.documentElement.classList.add("fourchan");
+    if (C.warosu)
+        document.documentElement.classList.add("warosu");
+    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed .icon{height:12px}#playlist-embed .icon.spin{transform:rotate(360deg);-webkit-transition:transform .25s ease-in;-moz-transition:transform .25s ease-in;-ms-transition:transform .25s ease-in;-o-transition:transform .25s ease-in;transition:transform .25s ease-in}:root.fourchan #playlist-embed .reload{transform:translate(0,1px)}#playlist-embed .reload{margin-right:.25em}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:only-of-type{display:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}:root:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}";
     switch (true) {
         case C.fourchan:
             const currentStyle = getComputedStyle(document.querySelector(".post.reply"));
-            css += `:root.fourchan-x:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}:root:not(.fourchan-x) .dialog{background-color:${currentStyle["backgroundColor"]};border:1px solid ${currentStyle["borderRightColor"]};box-shadow:0 1px 2px rgba(0,0,0,.15)}`;
+            css += `:root:not(.fourchan-x) .dialog{background-color:${currentStyle["backgroundColor"]};border:1px solid ${currentStyle["borderRightColor"]};box-shadow:0 1px 2px rgba(0,0,0,.15)}`;
             break;
         case C.warosu:
             css += ".dialog{background-color:var(--darker-background-color);border:1px solid var(--even-darker-background-color);box-shadow:0 1px 2px rgba(0,0,0,.15)}#playlist-embed a{text-decoration:none}";
