@@ -267,11 +267,14 @@ class Dialog {
 
         if (close || ! this.self?.classList.contains("hide")) {
             this.self?.classList.add("hide");
-            if (C.fourchanX) this.toggleBtn?.classList.add("disabled");
-            
+            if (!C.fourchanX) return;
+            const button = document.getElementById("shortcut-playlist")?.firstElementChild;
+            button?.classList.add("disabled");
         } else {
             this.self?.classList.remove("hide");
-            if (C.fourchanX) this.toggleBtn?.classList.remove("disabled");
+            if (!C.fourchanX) return;
+            const button = document.getElementById("shortcut-playlist")?.firstElementChild;
+            button?.classList.remove("disabled");
         }
         
     }
