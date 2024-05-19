@@ -53,9 +53,14 @@ class Dialog {
                 case C.fourchan:
                     document.getElementById("navtopright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
                     document.getElementById("navbotright")?.insertAdjacentHTML("afterbegin", "[<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>] ");
-                    document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
+                    
+                    document.addEventListener("4chanParsingDone", () => {
+                        document.getElementById("settingsWindowLinkClassic")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>");
+                        document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
 
-                    document.querySelectorAll(".playlist-toggle.native").forEach((l) => { (l as HTMLElement).onclick = initOrToggle });
+                        document.querySelectorAll(".playlist-toggle.native").forEach((l) => { (l as HTMLElement).onclick = initOrToggle });
+                    });
+                    
                     break;
 
                 case C.warosu:
