@@ -11,4 +11,4 @@ An on the fly YouTube playlist generator that fetches links from a thread. Major
 
 ### Preview
 
-[4chan-preview.webm](https://github.com/Hash6232/4chan-x-yt-playlist/assets/164906916/385ba9c4-6467-49f5-8142-b67282c687b0)
+[4chan-preview.webm](https://github.com/Hash6232/4chan-yt-playlist/assets/164906916/7a60258d-b6dc-4fcb-83e0-5a3a4e451033)
