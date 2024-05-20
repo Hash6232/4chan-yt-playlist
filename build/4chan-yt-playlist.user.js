@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.2
+// @version     2.4.3
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -606,7 +606,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.documentElement.classList.add("fourchan");
     if (C.warosu)
         document.documentElement.classList.add("warosu");
-    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed .icon{height:12px}#playlist-embed .icon.spin{transform:rotate(360deg);-webkit-transition:transform .25s ease-in;-moz-transition:transform .25s ease-in;-ms-transition:transform .25s ease-in;-o-transition:transform .25s ease-in;transition:transform .25s ease-in}:root.fourchan #playlist-embed .reload{transform:translate(0,1px)}#playlist-embed .reload{margin-right:.25em}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:only-of-type{display:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}:root:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}";
+    let css = "#playlist-embed{position:fixed;padding:1px 4px}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed .icon{height:12px}#playlist-embed .icon.spin{transform:rotate(360deg);-webkit-transition:transform .25s ease-in;-moz-transition:transform .25s ease-in;-ms-transition:transform .25s ease-in;-o-transition:transform .25s ease-in;transition:transform .25s ease-in}:root.fourchan #playlist-embed .reload{transform:translate(0,1px)}#playlist-embed .reload{margin-right:.25em}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:only-of-type{display:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}:root.shortcut-icons:not(.fourchan-xt) #shortcut-playlist .icon--alt-text{font-size:0;visibility:hidden}:root:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}";
     switch (true) {
         case C.fourchan:
             const currentStyle = getComputedStyle(document.querySelector(".post.reply"));
