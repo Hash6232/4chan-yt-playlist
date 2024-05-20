@@ -7,7 +7,7 @@ export default [
   {
     input: 'src/index.ts',
     output: {
-      file: 'build/4chan-x-yt-playlist.user.js',
+      file: 'build/4chan-yt-playlist.user.js',
       format: 'es'
     },
     plugins: [typescript(), metablock({
@@ -17,7 +17,7 @@ export default [
   {
     input: 'src/index.ts',
     output: {
-      file: 'build/4chan-x-yt-playlist.min.user.js',
+      file: 'build/4chan-yt-playlist.min.user.js',
       format: 'es'
     },
     plugins: [typescript(), terser(), metablock({
