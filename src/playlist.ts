@@ -66,7 +66,7 @@ class Playlist {
                     const { posts } = await response.json() as { posts: { no: number, com?: string }[] };
                     return posts.map((post) => [ post.no.toString(), post.com || "" ])
                 case C.warosu:
-                    return [...document.querySelectorAll(".comment blockquote")]
+                    return [...document.querySelectorAll(".comment:not(:has(img[alt='[DELETED]'])) blockquote")]
                         .map((post) => [ post.parentElement?.id.slice(1) ?? "", post.innerHTML ])
                 default:
                     return []
