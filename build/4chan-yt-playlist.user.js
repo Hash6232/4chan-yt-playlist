@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.3
+// @version     2.4.4
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -334,7 +334,7 @@ class Playlist {
                     const { posts } = await response.json();
                     return posts.map((post) => [post.no.toString(), post.com || ""]);
                 case C.warosu:
-                    return [...document.querySelectorAll(".comment blockquote")]
+                    return [...document.querySelectorAll(".comment:not(:has(img[alt='[DELETED]'])) blockquote")]
                         .map((post) => [post.parentElement?.id.slice(1) ?? "", post.innerHTML]);
                 default:
                     return [];
