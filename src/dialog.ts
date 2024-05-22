@@ -58,9 +58,15 @@ class Dialog {
                         document.getElementById("settingsWindowLinkClassic")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a>");
                         document.getElementById("settingsWindowLinkMobile")?.insertAdjacentHTML("beforebegin", "<a class=\"playlist-toggle native\" href=\"javascript:;\" title=\"Toggle YouTube playlist\">Playlist</a> ");
 
-                        document.querySelectorAll(".playlist-toggle.native").forEach((l) => { (l as HTMLElement).onclick = initOrToggle });
+                        ["settingsWindowLinkClassic", "settingsWindowLinkMobile"].forEach((id) => {
+                            (document.getElementById(id)?.querySelector(".playlist-toggle") as HTMLElement).onclick = initOrToggle;
+                        });
                     });
-                    
+
+                    ["navtopright", "navbotright"].forEach((id) => {
+                        (document.getElementById(id)?.querySelector(".playlist-toggle") as HTMLElement).onclick = initOrToggle;
+                    });
+
                     break;
 
                 case C.warosu:
