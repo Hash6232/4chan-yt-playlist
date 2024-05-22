@@ -261,7 +261,7 @@ class Playlist {
             if (this.playing) {
                 this.player.loadPlaylist(pages[0]);
             } else {
-                this.player.loadPlaylist(pages[0]);
+                this.player.cuePlaylist(pages[0]);
             }
         }
     }
