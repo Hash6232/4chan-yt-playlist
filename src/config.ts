@@ -1,6 +1,10 @@
 declare global {
     interface Window {
         thread_archived: boolean,
+
+        Main: {
+            stylesheet: string
+        },
     
         Config: { 
             disableAll: boolean,

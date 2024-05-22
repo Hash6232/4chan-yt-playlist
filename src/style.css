@@ -1,3 +1,28 @@
+:root.yotsuba {
+    --fourchan-native-background-color: #f0e0d6;
+    --fourchan-native-border-color: #d9bfb7;
+}
+:root.yotsuba-b {
+    --fourchan-native-background-color: #d6daf0;
+    --fourchan-native-border-color: #b7c5d9;
+}
+:root.futaba {
+    --fourchan-native-background-color: #f0e0d6;
+    --fourchan-native-border-color: #d9bfb7;
+}
+:root.burichan {
+    --fourchan-native-background-color: #d6daf0;
+    --fourchan-native-border-color: #b7c5d9;
+}
+:root.tomorrow {
+    --fourchan-native-background-color: #282a2e;
+    --fourchan-native-border-color: #282a2e;
+}
+:root.photon {
+    --fourchan-native-background-color: #ddd;
+    --fourchan-native-border-color: #ccc;
+}
+
 #playlist-embed {
     position: fixed;
     padding: 1px 4px;
