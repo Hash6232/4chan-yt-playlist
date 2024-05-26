@@ -191,15 +191,16 @@ class Playlist {
 
         const output: string[][] = [];
 
-        const ids = Object.values(this.posts).flatMap((post) => {
-            return post.reduce((validVideos: string[], video) => {
+        const ids = Object.values(this.posts).flat()
+            .reduce((validVideos: string[], video) => {
                 const [ id, status ] = video;
 
-                if (status && ! validVideos.includes(id))
+                if (status && validVideos.indexOf(id) < 0) {
                     validVideos.push(id);
+                }
+
                 return validVideos
-            }, [])
-        });
+        }, []);
 
         for (let i = 0; i < ids.length; i += 200) {
             const chunk = ids.slice(i, i + 200);
