@@ -1,6 +1,6 @@
 {
     "name": "4chan - YouTube Playlist",
-    "version": "2.4.7",
+    "version": "2.4.8",
     "namespace": "4chan-yt-playlist",
     "description": "Wraps all YouTube videos inside a thread into a playlist",
     "include": [

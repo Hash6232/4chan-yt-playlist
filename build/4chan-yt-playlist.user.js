@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.7
+// @version     2.4.8
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -613,24 +613,20 @@ document.addEventListener("DOMContentLoaded", () => {
         document.documentElement.classList.add("warosu");
     let css = ":root.yotsuba{--fourchan-native-background-color:#f0e0d6;--fourchan-native-border-color:#d9bfb7}:root.yotsuba-b{--fourchan-native-background-color:#d6daf0;--fourchan-native-border-color:#b7c5d9}:root.futaba{--fourchan-native-background-color:#f0e0d6;--fourchan-native-border-color:#d9bfb7}:root.burichan{--fourchan-native-background-color:#d6daf0;--fourchan-native-border-color:#b7c5d9}:root.tomorrow{--fourchan-native-background-color:#282a2e;--fourchan-native-border-color:#282a2e}:root.photon{--fourchan-native-background-color:#ddd;--fourchan-native-border-color:#ccc}#playlist-embed{position:fixed;padding:1px 4px}:root:not(.fourchan-x) #playlist-embed{border-width:1px;border-style:solid;box-shadow:0 1px 2px rgba(0,0,0,.15)}:root.fourchan:not(.fourchan-x) #playlist-embed{background-color:var(--fourchan-native-background-color);border-color:var(--fourchan-native-border-color)}:root.warosu #playlist-embed{background-color:var(--darker-background-color);border-color:var(--even-darker-background-color)}:root.warosu #playlist-embed a{text-decoration:none}#playlist-embed.hide{display:none}#playlist-embed>div:first-child{display:flex}#playlist-embed .icon{height:12px}#playlist-embed .icon.spin{transform:rotate(360deg);-webkit-transition:transform .25s ease-in;-moz-transition:transform .25s ease-in;-ms-transition:transform .25s ease-in;-o-transition:transform .25s ease-in;transition:transform .25s ease-in}:root.fourchan #playlist-embed .reload{transform:translate(0,1px)}#playlist-embed .reload{margin-right:.25em}#playlist-embed ul,#playlist-embed li{margin:0;padding:0}#playlist-embed li{display:inline-block;list-style-type:none}#playlist-embed li:only-of-type{display:none}#playlist-embed li:not(:only-of-type):not(:last-of-type)::after{content:'•';margin:0 .25em}#playlist-embed .move{flex:1;cursor:move}#playlist-embed .jump{margin-top:-1px}#playlist-embed .close{margin-left:4px}:root.shortcut-icons:not(.fourchan-xt) #shortcut-playlist .icon--alt-text{font-size:0;visibility:hidden}:root:not(.fourchan-xt) #shortcut-playlist .icon{height:15px;width:16px;margin-bottom:-3px}";
     const styles = [
-        ["yotsuba", "yotsubanew", "Yotsuba New"], ["yotsuba-b", "yotsubluenew", "Yotsuba B New"], ["futaba", "futabanew", "Futaba New"],
-        ["burichan", "burichannew", "Burichan New"], ["photon", "photon", "Photon"], ["tomorrow", "tomorrow", "Tomorrow"]
+        ["yotsuba", "yotsubanew"], ["yotsuba-b", "yotsubabnew"], ["futaba", "futabanew"],
+        ["burichan", "burichannew"], ["photon", "photon"], ["tomorrow", "tomorrow"]
     ];
     document.head.insertAdjacentHTML("beforeend", "<style>" + css + "</style>");
-    if (C.fourchanX)
+    if (!C.fourchan)
         return;
-    changeStylingClass(document.cookie.split(";").find((c) => c.startsWith("ws_style=")));
+    changeStylingClass(unsafeWindow.Main.stylesheet.replace(/_/g, ""));
     const ob = new MutationObserver(() => { changeStylingClass(); });
     ob.observe(document.querySelector("link[rel='stylesheet']"), { attributes: true });
     function changeStylingClass(cookie) {
-        let index;
-        if (cookie) {
-            index = styles.map((s) => s[2]).indexOf(cookie.split("=")[1]);
-        }
-        else {
-            const currentStyleName = document.styleSheets[0].href?.match(/css\/(.+)\..+\.css$/)?.[1] || "";
-            index = styles.map((s) => s[1]).indexOf(currentStyleName);
-        }
+        if (C.fourchanX)
+            return;
+        const currentStyleName = document.styleSheets[0].href?.match(/css\/(.+)\..+\.css$/)?.[1] || "";
+        const index = styles.map((s) => s[1]).indexOf(cookie ? cookie : currentStyleName);
         if (index < 0 || document.documentElement.classList.contains(styles[index][0]))
             return;
         styles.forEach((c) => document.documentElement.classList.remove(c[0]));
