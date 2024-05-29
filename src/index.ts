@@ -70,6 +70,9 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
             const icon = playlist.dialog.self?.querySelector(".reload .icon");
             icon?.classList.remove("spin");
 
+            // Move focus away from iframe to hide ghosting "Next track" popup
+            playlist.player?.getIframe().blur();
+
         }
     
         // This has to stay at the bottom or it will mess with prev isPlaying checks
