@@ -2,7 +2,7 @@
 // @name        4chan - YouTube Playlist
 // @description Wraps all YouTube videos inside a thread into a playlist
 // @namespace   4chan-yt-playlist
-// @version     2.4.8
+// @version     2.4.9
 // @include     https://boards.4chan.org/*/thread/*
 // @include     https://warosu.org/*/thread/*
 // @run-at      document-start
@@ -552,6 +552,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
                 playlist.updatePlayer();
             const icon = playlist.dialog.self?.querySelector(".reload .icon");
             icon?.classList.remove("spin");
+            playlist.player?.getIframe().blur();
         }
         playlist.playing = (e.data == 1 || e.data == 3) ? true : false;
     }
