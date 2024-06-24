@@ -59,8 +59,10 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
                 history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
             } catch (err) { console.error("Failed to parse playlist history from local storage."); console.error(err); };
             
-            history[C.board + "." + C.thread] = playlist.track;
-            localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
+            if (playlist.track.length > 0) {
+                history[C.board + "." + C.thread] = playlist.track;
+                localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
+            }        
     
             // Due to a change to when state 0 is returned, update playlist
             // attempts must now also happen when the next track is loaded
