@@ -31,12 +31,18 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
     
         if (lastPlayedTrack && lastPage) {
+            playlist.lastPlayed = lastPlayedTrack;
+            console.debug("Last played since last time:", playlist.lastPlayed);
             e.target.cuePlaylist(lastPage, lastPage.indexOf(lastPlayedTrack))
         } else {
+            console.debug("Resetting..");
             e.target.cuePlaylist(pages[0])
         }
 
         playlist.dialog.toggle();
+
+        console.debug("lastPlayedTrack: ", lastPlayedTrack, " | lastPage: ", lastPage);
+        console.debug("videoURL: ", e.target.getVideoUrl());
 
     };
     
@@ -53,6 +59,8 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
 
             // Save last played track
             playlist.track = e.target.getVideoUrl().split("=").pop() || "";
+
+            console.debug("videoURL: ", playlist.track);
             
             let history: { [key: string]: string } = {};
             try {

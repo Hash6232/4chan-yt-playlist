@@ -292,6 +292,7 @@ class Playlist {
         this.dialog = new Dialog(this);
         this.player = null;
         this.track = "";
+        this.lastPlayed = "";
         this.regex = /(?:https?:\/\/)?(?:www\.)?youtu(?:\.be\/|be.com\/\S*?(?:watch|embed)(?:(?:(?=\/[-a-zA-Z0-9_]{11,}(?!\S))\/)|(?:\S*?v=|v\/)))([-a-zA-Z0-9_]{11,})/g;
         if (!C.fourchan && !C.warosu)
             throw new Error("Website not supported..");
@@ -474,10 +475,11 @@ class Playlist {
     reload() {
         if (!this.player)
             return;
+        const lastPlayedTrack = this.track || this.lastPlayed;
         const pages = this.toPages();
-        const page = pages.findIndex(p => p.includes(this.track));
+        const page = pages.findIndex(p => p.includes(lastPlayedTrack));
         if (page > -1) {
-            const index = pages[page].indexOf(this.track), trackTime = this.player.getCurrentTime();
+            const index = pages[page].indexOf(lastPlayedTrack), trackTime = this.player.getCurrentTime();
             if (this.playing) {
                 this.player.loadPlaylist(pages[page], index, trackTime);
             }
@@ -522,12 +524,17 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         const lastPlayedTrack = history[C.board + "." + C.thread] || null;
         const lastPage = lastPlayedTrack ? pages.find(p => p.includes(lastPlayedTrack)) : null;
         if (lastPlayedTrack && lastPage) {
+            playlist.lastPlayed = lastPlayedTrack;
+            console.debug("Last played since last time:", playlist.lastPlayed);
             e.target.cuePlaylist(lastPage, lastPage.indexOf(lastPlayedTrack));
         }
         else {
+            console.debug("Resetting..");
             e.target.cuePlaylist(pages[0]);
         }
         playlist.dialog.toggle();
+        console.debug("lastPlayedTrack: ", lastPlayedTrack, " | lastPage: ", lastPage);
+        console.debug("videoURL: ", e.target.getVideoUrl());
     }
     function updateTrack(e) {
         if (e.data == 0) {
@@ -538,6 +545,7 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
         }
         else if (e.data == -1) {
             playlist.track = e.target.getVideoUrl().split("=").pop() || "";
+            console.debug("videoURL: ", playlist.track);
             let history = {};
             try {
                 history = JSON.parse(localStorage.getItem("4chan-yt-playlist-history") || "{}");
@@ -546,8 +554,10 @@ unsafeWindow.onYouTubeIframeAPIReady = () => {
                 console.error("Failed to parse playlist history from local storage.");
                 console.error(err);
             }
-            history[C.board + "." + C.thread] = playlist.track;
-            localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
+            if (playlist.track.length > 0) {
+                history[C.board + "." + C.thread] = playlist.track;
+                localStorage.setItem("4chan-yt-playlist-history", JSON.stringify(history));
+            }
             if (playlist.mutated)
                 playlist.updatePlayer();
             const icon = playlist.dialog.self?.querySelector(".reload .icon");

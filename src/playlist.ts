@@ -104,6 +104,7 @@ class Playlist {
 
     player: YT.Player | null = null;
     track = "";
+    lastPlayed = "";
 
     regex = /(?:https?:\/\/)?(?:www\.)?youtu(?:\.be\/|be.com\/\S*?(?:watch|embed)(?:(?:(?=\/[-a-zA-Z0-9_]{11,}(?!\S))\/)|(?:\S*?v=|v\/)))([-a-zA-Z0-9_]{11,})/g;
 
@@ -246,11 +247,13 @@ class Playlist {
 
         if (!this.player) return;
 
+        const lastPlayedTrack = this.track || this.lastPlayed;
+
         const pages: string[][] = this.toPages();
-        const page = pages.findIndex(p => p.includes(this.track));
+        const page = pages.findIndex(p => p.includes(lastPlayedTrack));
 
         if (page > -1) {
-            const index = pages[page].indexOf(this.track),
+            const index = pages[page].indexOf(lastPlayedTrack),
             trackTime = this.player.getCurrentTime();
 
             if (this.playing) {
