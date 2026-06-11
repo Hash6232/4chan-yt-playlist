@@ -16,7 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - id: ver
-        run: echo "tag=v$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+        run: echo "tag=v$(jq -r .metadata.version package.json)" >> $GITHUB_OUTPUT
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
