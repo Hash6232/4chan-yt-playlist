@@ -1,70 +1,64 @@
-declare global {
-    interface Window {
-        thread_archived: boolean,
+class Config {
+    readonly isFourchan: boolean;
+    readonly isWarosu: boolean;
+    readonly board: string;
+    readonly thread: number;
 
-        Main: {
-            stylesheet: string
-        },
-    
-        Config: { 
-            disableAll: boolean,
-            dropDownNav: boolean,
-            classicNav: boolean,
-            autoHideNav: boolean
-         },
-         
-        onYouTubeIframeAPIReady: () => void;
-    }
-}
-
-const C = new class Conf {
+    private _parsingUpdate: boolean = false;
 
     constructor() {
+        this.isFourchan = location.hostname === "boards.4chan.org";
+        this.isWarosu = location.hostname === "warosu.org";
 
-        const pathname = location.pathname.slice(1).split("/thread/");
-        this.board = pathname[0];
-        this.thread = pathname[1];
-
-        if (this.warosu) this.initFinished = true;
-
-        document.addEventListener("4chanMainInit", () => {
-            this.native = !unsafeWindow.Config.disableAll;
-            this.fixedNav = unsafeWindow.Config.dropDownNav;
-            this.classicNav = unsafeWindow.Config.classicNav;
-            this.autohideNav = unsafeWindow.Config.autoHideNav;
-            this.initFinished = true;
-        });
-
-        document.addEventListener("4chanXInitFinished", () => {
-            this.fourchanX = true;
-        });
-
+        const pathname = location.pathname.split("/");
+        this.board = pathname[1];
+        this.thread = parseInt(pathname[3]) || 0;
     }
 
-    initFinished = false;
-
-    fourchan = location.hostname === "boards.4chan.org";
-    warosu = location.hostname === "warosu.org";
-    board: string;
-    thread: string;
-
-    // 4chan Native
-    native = true;
-    fixedNav = false;
-    classicNav = false;
-    autohideNav = false;
-    
-    // 4chan X
-    fourchanX = false;
-    get fixedHeader() {
-        if (!this.fourchanX) return false;
-        return document.documentElement.classList.contains("fixed")
-    }
-    get autohideHeader() {
-        if (!this.fourchanX) return false;
-        return document.documentElement.classList.contains("autohide")
+    get threadFullId() {
+        return this.board + "." + this.thread;
     }
 
+    get parsingUpdate() {
+        return this._parsingUpdate;
+    }
+
+    set parsingUpdate(state: boolean) {
+        this._parsingUpdate = state;
+    }
+
+    readonly native = {
+        get extensionDisabled() {
+            return !!unsafeWindow?.Config.disableAll;
+        },
+        get threadUpdaterEnabled() {
+            return !!unsafeWindow?.Config.threadUpdater;
+        },
+        get threadDead() {
+            return !!unsafeWindow?.ThreadUpdater.dead;
+        },
+        get headerEnabled() {
+            return !!unsafeWindow?.Config.dropDownNav;
+        },
+    };
+
+    readonly fourchanX = {
+        get enabled() {
+            return !!unsafeWindow?.FCX;
+        },
+        get fixedHeader() {
+            if (!this.enabled) return false;
+            return document.documentElement.classList.contains("fixed");
+        },
+        get autohideHeader() {
+            if (!this.enabled) return false;
+            return document.documentElement.classList.contains("autohide");
+        },
+        get bottomHeader() {
+            if (!this.enabled) return false;
+            return document.documentElement.classList.contains("bottom-header");
+        },
+    };
 }
 
-export { C }
+export default new Config();

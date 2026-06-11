@@ -1,14 +1,37 @@
-An on the fly YouTube playlist generator that fetches links from a thread. Major features:
+# 4chan - YouTube Playlist
 
-- Plays videos one after the other, one page after the other when there's +200 links
-- Auto-update playlist as new links are added to a thread (only on 4chan)
-- Sanity check on each link meaning that only playable videos will be played
-- Dedicated draggable dialog a la 4chan X featuring tabs shortcut, jump-to and close buttons 
-- Remembers position inside the playlist and dialog coordinates even on browser and PC reboot
-- Dedicated support for Warosu (it's truly a YouTube links goldmine!)
+A userscript that wraps all YouTube links in a 4chan (or Warosu) thread into a playlist, playing videos one after another.
 
----
+## Features
 
-### Preview
+- Plays videos one after another from a scrollable track list
+- Auto-updates playlist as new links are added to the thread
+- Validates each link so only playable videos are queued
+- Draggable dialog with track listing, track titles, and active track highlighting
+- Previous / Next track controls and loop toggle
+- Members-only video detection with automatic skip
+- Video title fetching and prefetching around the current track
+- Remembers last played track and dialog position across sessions
+- 4chan X integration (header shortcut, notifications)
+- Dedicated Warosu support
 
-[4chan-preview.webm](https://github.com/Hash6232/4chan-yt-playlist/assets/164906916/7a60258d-b6dc-4fcb-83e0-5a3a4e451033)
+## Installation
+
+Download the latest `.user.js` file from the [releases page](../../releases) and install it with your preferred userscript manager (Violentmonkey, Tampermonkey, Greasemonkey).
+
+## Development
+
+```bash
+npm install
+npm run build
+```
+
+Outputs to `build/`:
+- `4chan-yt-playlist.user.js` — development build
+- `4chan-yt-playlist.min.user.js` — minified build
+- `4chan-yt-playlist.debug.user.js` — debug build with inline sourcemaps
+
+## Compatibility
+
+- 4chan (native & 4chan X)
+- Warosu
