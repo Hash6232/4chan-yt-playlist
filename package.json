@@ -13,7 +13,9 @@
       "GM_setValue",
       "GM_getValue"
     ],
-    "run-at": "document-body"
+    "run-at": "document-body",
+    "downloadURL": "https://github.com/Hash6232/4chan-yt-playlist/releases/latest/download/4chan-yt-playlist.min.user.js",
+    "updateURL": "https://github.com/Hash6232/4chan-yt-playlist/releases/latest/download/4chan-yt-playlist.min.user.js"
   },
   "devDependencies": {
     "@rollup/plugin-terser": "^0.4.4",

@@ -17,7 +17,7 @@ A userscript that wraps all YouTube links in a 4chan (or Warosu) thread into a p
 
 ## Installation
 
-Download the latest `.user.js` file from the [releases page](../../releases) and install it with your preferred userscript manager (Violentmonkey, Tampermonkey, Greasemonkey).
+Download from [GitHub Releases](https://github.com/Hash6232/4chan-yt-playlist/releases)
 
 ## Development
 
