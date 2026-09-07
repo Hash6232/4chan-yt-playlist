@@ -18,7 +18,7 @@
     "updateURL": "https://github.com/Hash6232/4chan-yt-playlist/releases/latest/download/4chan-yt-playlist.min.user.js"
   },
   "devDependencies": {
-    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-terser": "^1.0.0",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/youtube": "^0.0.50",
     "@violentmonkey/types": "^0.1.7",
@@ -32,6 +32,9 @@
     "typescript": "^5.4.5"
   },
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "npx rollup -c"
   },
