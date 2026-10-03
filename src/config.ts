@@ -19,6 +19,15 @@ class Config {
         return this.board + "." + this.thread;
     }
 
+    // Warosu search results, e.g. /jp/?task=search2&... The query string is the
+    // only discriminator, which is why this is checked at runtime rather than
+    // relying on the userscript match alone.
+    get isWarosuSearch() {
+        if (!this.isWarosu) return false;
+
+        return (new URLSearchParams(location.search).get("task") ?? "").startsWith("search");
+    }
+
     get parsingUpdate() {
         return this._parsingUpdate;
     }

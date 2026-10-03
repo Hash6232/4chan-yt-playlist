@@ -154,6 +154,11 @@
 }
 
 :root.warosu {
+    td.comment.in-history {
+        outline: 2px solid red;
+        outline-offset: -2px;
+    }
+
     #playlist-embed {
         background-color: var(--darker-background-color);
         border-color: var(--even-darker-background-color);

@@ -1,6 +1,7 @@
 import C from "./config";
 import { Dialog } from "./Playlist/dialog";
 import { getPosts, addPosts, removePosts } from "./Thread/posts";
+import { highlightSearchResults } from "./Thread/search";
 import { initNativeUpdates, stopNativeUpdates } from "./Thread/watcher";
 import { sendNotification } from "./utils";
 import type { UpdateEvent } from "./types";
@@ -9,6 +10,14 @@ import "./style.scss";
 let dialog: Dialog;
 
 document.addEventListener("DOMContentLoaded", () => {
+    if (C.isWarosu) document.documentElement.classList.add("warosu");
+
+    // Search results are a list of threads, not posts: no videos, no dialog.
+    if (C.isWarosuSearch) {
+        highlightSearchResults();
+        return;
+    }
+
     C.parsingUpdate = true;
 
     getPosts()
@@ -43,7 +52,5 @@ document.addEventListener("DOMContentLoaded", () => {
             document.addEventListener("ThreadUpdateNative", callback);
             initNativeUpdates();
         }
-    } else if (C.isWarosu) {
-        document.documentElement.classList.add("warosu");
     }
 });
